@@ -44,7 +44,7 @@ int BPT_FreeNode(bp_node_t *node) {
     return 0;
 }
 
-void* BPT_RecursiveSearch(bp_node_t *node, int key) {
+bp_entry_t* BPT_RecursiveSearch(bp_node_t *node, int key) {
     if(node == NULL) return NULL;
 
     int i = 0;
@@ -154,7 +154,7 @@ int BPT_FreeTree(bp_tree_t *tree) {
     }
 }
 
-void* BPT_SearchKey(bp_tree_t *tree, int key) {
+bp_entry_t* BPT_SearchKey(bp_tree_t *tree, int key) {
     return BPT_RecursiveSearch(tree->root, key); /* Perform recursive search of the tree */
 }
 

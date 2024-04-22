@@ -30,7 +30,7 @@ typedef struct {
 
 bp_tree_t* BPT_CreateTree(void);
 int BPT_FreeTree(bp_tree_t *tree);
-void* BPT_SearchKey(bp_tree_t *tree, int key);
+bp_entry_t* BPT_SearchKey(bp_tree_t *tree, int key);
 void BPT_Insert(bp_tree_t *tree, int key, char* value, uint64_t length);
 
 // Debugging
