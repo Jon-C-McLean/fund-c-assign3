@@ -1,6 +1,6 @@
 /**
  * @file bp.h
- * 
+ * @author Jon McLean (13515869)
  */
 #include <stdlib.h>
 #include <stdio.h>

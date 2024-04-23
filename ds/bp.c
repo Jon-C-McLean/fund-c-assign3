@@ -1,6 +1,6 @@
 /**
  * @file bp.c
- * 
+ * @author Jon McLean (13515869)
  */
 #include "bp.h"
 
