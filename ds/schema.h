@@ -6,7 +6,7 @@
 #ifndef SCHEMA_H_
 #define SCHEMA_H_
 
-#include "utils/errors.h"
+#include "../utils/errors.h"
 
 #define MAX_DB_NAME_SIZE 100U
 #define MAX_TABLE_NAME_SIZE 100U

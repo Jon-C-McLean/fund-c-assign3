@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "ds/db.h"
+#include "../ds/db.h"
 
 void GUI_PrintWelcome();
 void GUI_PrintMainMenu();

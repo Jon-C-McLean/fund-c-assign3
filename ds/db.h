@@ -10,10 +10,9 @@
 
 typedef struct {
     char *data;
+    
     int rows;
     int tableId;
-
-    char *data;
 } table_t;
 
 typedef struct {
@@ -32,7 +31,7 @@ status_t DB_DeleteRow(database_t *db, char *tableName, int rowId);
 
 status_t DB_UpdateRow(database_t *db, char *tableName, int rowId, void **values);
 
-status_t DB_SaveDatabase(database_t *db, char *filename, bool compress, char *key, int keySize);
+status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key, int keySize);
 status_t DB_LoadFromDisk(database_t *db, char *filename, char *key, int keySize);
 
 #endif
