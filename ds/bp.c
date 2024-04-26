@@ -8,11 +8,12 @@
  * Private Functions
 */
 bp_node_t* BPT_CreateNode(void) {
-    bp_node_t *node = (bp_node_t *)malloc(sizeof(bp_node_t));
+    int i;
+    bp_node_t *node;
+    
+    node = (bp_node_t *)malloc(sizeof(bp_node_t));
     node->nextIndex = 0;
     node->isLeaf = 1;
-    
-    int i;
     for(i = 0; i < MAX_TREE_ENTRIES; i++) {
         node->entries[i] = NULL;
     }
@@ -45,9 +46,10 @@ int BPT_FreeNode(bp_node_t *node) {
 }
 
 bp_entry_t* BPT_RecursiveSearch(bp_node_t *node, int key) {
-    if(node == NULL) return NULL;
-
     int i = 0;
+    bp_node_t *child;
+
+    if(node == NULL) return NULL;
     while(i < MAX_TREE_ENTRIES && node->entries[i] != NULL && node->entries[i]->key < key) {
         i++;
     }
@@ -56,7 +58,7 @@ bp_entry_t* BPT_RecursiveSearch(bp_node_t *node, int key) {
         return node->entries[i];
     }
 
-    bp_node_t *child = node->nodes[i]; /* Don't need to check for NULL as this is handled at top of function */
+    child = node->nodes[i]; /* Don't need to check for NULL as this is handled at top of function */
     return BPT_RecursiveSearch(child, key);
 }
 
@@ -76,13 +78,14 @@ void BPT_InsertIntoLeaf(bp_node_t *leafNode, bp_entry_t *newEntry) {
 
 
 void BPT_SplitLeafNode(bp_node_t *parentNode, int index, bp_node_t *leafNode) {
+    int splitIndex, i;
     bp_node_t *newLeafNode = BPT_CreateNode();
     newLeafNode->isLeaf = 1;
 
-    int splitIndex = leafNode->nextIndex / 2;
+    splitIndex = leafNode->nextIndex / 2;
 
-    // Copy entries to the new leaf node
-    int i = 0;
+    /* Copy entries to the new leaf node */
+    i = 0;
     for (i = splitIndex; i < leafNode->nextIndex; i++) {
         newLeafNode->entries[i - splitIndex] = leafNode->entries[i];
         leafNode->entries[i] = NULL;
@@ -91,7 +94,7 @@ void BPT_SplitLeafNode(bp_node_t *parentNode, int index, bp_node_t *leafNode) {
     newLeafNode->nextIndex = leafNode->nextIndex - splitIndex;
     leafNode->nextIndex = splitIndex;
 
-    // Move child nodes in the parent node
+    /* Move child nodes in the parent node */
     for (i = parentNode->nextIndex; i > index + 1; i--) {
         parentNode->nodes[i] = parentNode->nodes[i - 1];
     }
@@ -100,18 +103,16 @@ void BPT_SplitLeafNode(bp_node_t *parentNode, int index, bp_node_t *leafNode) {
     parentNode->entries[index] = newLeafNode->entries[0];
     parentNode->nextIndex++;
 
-    // Update parent node flag if necessary
+    /* Update parent node flag if necessary */
     if (parentNode->isLeaf) {
-        parentNode->isLeaf = 0; // Update parent node to indicate it's not a leaf anymore
+        parentNode->isLeaf = 0; /* Update parent node to indicate it's not a leaf anymore */
     }
 }
 
 
 void BPT_DisplayTreeLevel(bp_node_t *node, int level) {
-    if (node == NULL)
-        return;
-
     int i, j;
+    if (node == NULL) return;
 
     if (!node->isLeaf) {
         for (i = node->nextIndex; i >= 0; i--) {
@@ -149,9 +150,13 @@ bp_tree_t* BPT_CreateTree(void) {
 
 int BPT_FreeTree(bp_tree_t *tree) {
     if (tree != NULL) {
-        BPT_FreeNode(tree->root);
+        if(BPT_FreeNode(tree->root) != 0) {
+            return -1; /* TODO: Replace with actual error return */
+        }
         free(tree);
     }
+
+    return 0;
 }
 
 bp_entry_t* BPT_SearchKey(bp_tree_t *tree, int key) {
@@ -160,17 +165,19 @@ bp_entry_t* BPT_SearchKey(bp_tree_t *tree, int key) {
 
 void BPT_Insert(bp_tree_t *tree, int key, char* value, uint64_t length) {
     int i;
+    bp_entry_t *entry;
+    bp_node_t *currentNode;
 
     if(tree->root == NULL) {
         tree->root = BPT_CreateNode();
     }
 
-    bp_entry_t *entry = (bp_entry_t *)malloc(sizeof(bp_entry_t));
+    entry = (bp_entry_t *)malloc(sizeof(bp_entry_t));
     entry->key = key;
     entry->value = value;
     entry->length = length;
 
-    bp_node_t *currentNode = tree->root;
+    currentNode = tree->root;
     if(currentNode->nextIndex == MAX_TREE_ENTRIES) {
         bp_node_t *newRoot = BPT_CreateNode();
         newRoot->isLeaf = 0;
@@ -198,18 +205,18 @@ void BPT_Insert(bp_tree_t *tree, int key, char* value, uint64_t length) {
         currentNode = currentNode->nodes[i];
     }
 
-    // Check for duplicate key
+    /* Check for duplicate key */
     for (i = 0; i < currentNode->nextIndex; i++) {
         if (currentNode->entries[i]->key == entry->key) {
-            // Duplicate key found, overwrite the value
+            /* Duplicate key found, overwrite the value */
             currentNode->entries[i]->value = entry->value;
             currentNode->entries[i]->length = length;
-            free(entry); // Free the allocated memory for the new entry
+            free(entry); /* Free the allocated memory for the new entry */
             return;
         }
     }
 
-    // If the key is not found, insert the new entry
+    /* If the key is not found, insert the new entry */
     if(currentNode->nextIndex < MAX_TREE_ENTRIES) {
         BPT_InsertIntoLeaf(currentNode, entry);
     } else {
