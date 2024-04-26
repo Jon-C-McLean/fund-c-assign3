@@ -1,16 +1,5 @@
 #include "interface.h"
 
-/*
- _______         _______  .______   
-|   ____|       |       \ |   _  \  
-|  |__    ______|  .--.  ||  |_)  | 
-|   __|  |______|  |  |  ||   _  <  
-|  |____        |  '--'  ||  |_)  | 
-|_______|       |_______/ |______/  
-                                    
-
-*/
-
 void GUI_PrintWelcome() {
     SCREEN_ClearScreen();
     printf(" _______         _______  .______   \n");
@@ -51,6 +40,27 @@ int GUI_GetOptionSelection(int min, int max, char* prompt) {
     }
 
     return -1;
+}
+/* Startup Operations */
+database_t* GUI_LoadDatabase(void) {
+    /* TODO: Load from file */
+    return NULL;
+}
+
+database_t* GUI_CreateDefaultDatabase(void) {
+    database_t *db;
+    SCREEN_ClearScreen();
+    printf("Database Creator\n");
+    printf("================\n");
+
+    printf("Setting up default database...\n");
+    status_t status = DB_CreateDefaultDatabase(&db);
+    if(status != kStatus_Success) {
+        printf("Error creating default database\n");
+        return NULL;
+    }
+    printf("Database created successfully\n");
+    return db;
 }
 
 /* General Operations */
@@ -110,12 +120,22 @@ void GUI_Main() {
             case 1: /* Load DB from file */
                 break;
             case 2: /* Create default E-DB */
+                db = GUI_CreateDefaultDatabase();
+                if(db == NULL) {
+                    printf("FATAL: Database creation failed...\n");
+                    exit(-1);
+                }
+                GUI_PrintMainMenu(); /* Print menu again as screen was cleared */
                 break;
             case 3:
                 GUI_DataOperationsLoop(db);
+
+                GUI_PrintMainMenu(); /* Print menu again as screen was cleared */
                 break;
             case 4:
                 GUI_SchemaOperationsLoop(db);
+
+                GUI_PrintMainMenu(); /* Print menu again as screen was cleared */
                 break;
             case 5:
                 /* XXX: TODO */
@@ -128,7 +148,7 @@ void GUI_Main() {
                 exit(0);
                 break;
             case -1:
-                printf("Fatal error, exiting...\n");
+                printf("FATAL: Internal error occured\n");
                 exit(-1);
                 break;
         }

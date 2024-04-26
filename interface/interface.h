@@ -14,6 +14,10 @@ void GUI_PrintMainMenu();
 
 int GUI_GetOptionSelection(int min, int max, char* prompt);
 
+/* Startup Operations */
+database_t* GUI_LoadDatabase(void);
+database_t* GUI_CreateDefaultDatabase(void);
+
 /* General Operations */
 void GUI_DataOperationsLoop(database_t *db);
 void GUI_PrintDataOperationsMenu(database_t *db);
