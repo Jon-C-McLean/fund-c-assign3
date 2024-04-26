@@ -12,7 +12,7 @@
 #define MAX_TABLE_NAME_SIZE 100U
 #define MAX_COLUMN_NAME_SIZE 100U
 
-// Schema used to define a user-defined table's structure and metadata
+/* Schema used to define a user-defined table's structure and metadata */
 
 typedef enum {
     INT,

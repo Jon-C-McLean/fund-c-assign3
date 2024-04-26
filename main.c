@@ -1,8 +1,8 @@
 #include <stdio.h>
 
-#include "ds/bp.h"
+#include "interface/interface.h"
 
 int main(void) {
-
+    GUI_Main();
     return 0;
 }

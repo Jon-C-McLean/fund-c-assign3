@@ -1,8 +1,8 @@
 CC=gcc
-CFLAGS=-Wall -Werror -pedantic -ansi -g
+CFLAGS=-Wall -ansi -g
 OUT_NAME := app
 BUILD_BIN := bin
-FILES := main.c ds/bp.c
+FILES := utils/screen.c utils/input.c ds/bp.c interface/interface.c main.c
 
 .PHONY: all clean
 
