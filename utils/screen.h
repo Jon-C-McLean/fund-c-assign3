@@ -10,6 +10,7 @@
 
 /**
  * @brief Clears the terminal screen (using ANSI escape codes)
+ * @author Jon McLean (13515869)
  */
 void SCREEN_ClearScreen(void); /* printf("\033[2J\033[1;1H"); */
 
