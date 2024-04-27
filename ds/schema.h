@@ -48,6 +48,7 @@ typedef struct __attribute__((__packed__)) {
 
 /**
  * @brief Initializes a database schema with the default options
+ * @author Jon McLean (13515869)
  * 
  * @warning This operation will allocate memory. It must be destroyed 
  * correctly using SCHEMA_DestroyDatabaseSchema
@@ -59,6 +60,7 @@ status_t SCHEMA_CreateDefaultDatabaseSchema(database_schema_t **schema);
 
 /**
  * @brief Frees the memory allocated for the database schema.
+ * @author Jon McLean (13515869)
  * 
  * @param[inout] schema The database schema to free
  * @return status_t Status of the operation
@@ -67,6 +69,7 @@ status_t SCHEMA_DestroyDatabaseSchema(database_schema_t *schema);
 
 /**
  * @brief Get the table ID for a given table name
+ * @author Jon McLean (13515869)
  * 
  * @param[in] schema Database schema
  * @param[in] name Name for which to get the table ID
@@ -77,6 +80,7 @@ status_t SCHEMA_GetTableIdForName(database_schema_t *schema, char *name, int *ta
 
 /**
  * @brief Get the table schema for a given table ID
+ * @author Jon McLean (13515869)
  * 
  * @param[in] schema Database schema
  * @param[in] tableId table ID for the desired table
@@ -87,6 +91,7 @@ status_t SCHEMA_GetTableForId(database_schema_t *schema, int tableId, table_sche
 
 /**
  * @brief Creates and allocates a new table in the database schema
+ * @author Jon McLean (13515869)
  * 
  * @warning This operation will allocate memory. It must be destroyed
  * correctly using SCHEMA_DestroyTableStructure
@@ -101,6 +106,7 @@ status_t SCHEMA_DefineTableStructure(database_schema_t *schema, char *name, tabl
 
 /**
  * @brief Deletes a table from the database schema
+ * @author Jon McLean (13515869)
  * 
  * @param[inout] schema Database schema to delete the table from
  * @param[inout] index Index of the table to delete
@@ -110,6 +116,7 @@ status_t SCHEMA_DestroyTableStructure(database_schema_t *schema, int index);
 
 /**
  * @brief Get the column for a given column name in a table
+ * @author Jon McLean (13515869)
  * 
  * @param[in] table Table schema to search
  * @param[in] name Name of the column to search for
@@ -120,6 +127,7 @@ status_t SCHEMA_GetColumnForName(table_schema_def_t *table, char *name, table_co
 
 /**
  * @brief Adds a column to a table schema
+ * @author Jon McLean (13515869)
  * 
  * @param[inout] schema Database schema containing the table
  * @param[in] tableId ID of the table to add the column to
@@ -133,6 +141,7 @@ status_t SCHEMA_AddColumn(database_schema_t *schema, int tableId, char *name, co
 
 /**
  * @brief Deletes a column from a table schema
+ * @author Jon McLean (13515869)
  * 
  * @param[inout] schema Schema containing the table
  * @param tableId ID of the table to delete the column from

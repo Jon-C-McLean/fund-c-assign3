@@ -31,6 +31,7 @@ typedef struct {
 
 /**
  * @brief Create a new B+ Tree
+ * @author Jon McLean (13515869)
  * 
  * @return bp_tree_t* The resulting B+ Tree
  */
@@ -38,6 +39,7 @@ bp_tree_t* BPT_CreateTree(void);
 
 /**
  * @brief Free a B+ Tree and all associated memory
+ * @author Jon McLean (13515869)
  * 
  * @param[in] tree The tree to free
  * @return int Status of the operation
@@ -46,6 +48,7 @@ int BPT_FreeTree(bp_tree_t *tree);
 
 /**
  * @brief Search for a key in the B+ Tree
+ * @author Jon McLean (13515869)
  * 
  * @param[in] tree The tree to search
  * @param[in] key The key to search for
@@ -55,6 +58,7 @@ bp_entry_t* BPT_SearchKey(bp_tree_t *tree, int key);
 
 /**
  * @brief Insert a new key into the B+ Tree
+ * @author Jon McLean (13515869)
  * 
  * @param[in] tree The tree to insert into
  * @param[in] key The key to insert
@@ -65,6 +69,8 @@ void BPT_Insert(bp_tree_t *tree, int key, char* value, uint64_t length);
 
 /**
  * @brief Display the B+ Tree
+ * @author Jon McLean (13515869)
+ * 
  * @note This is for debugging purposes only
  * @param[in] tree The tree to display
  */

@@ -12,11 +12,14 @@
 /**
  * @brief Clears the input buffer of any hanging characters (up to and
  * including the newline character)
+ * 
+ * @author Jon McLean (13515869)
  */
 void INPUT_ClearInputBuffer(void);
 
 /**
  * @brief Get the user's input (as an integer)
+ * @author Jon McLean (13515869)
  * 
  * @param[out] value The retrieved integer value
  */
@@ -31,7 +34,7 @@ void INPUT_GetInteger(int* value);
  * @warning The function will not allocate space for the string, it is assumed
  * that the str param is already allocated
  * 
- * @author Jon McLean (13515869) A2 Submission
+ * @author Jon McLean (13515869) (taken from A2 Submission)
  * 
  * @param[out] str The string to store the user's input in
  * @param[in] size The maximum size of the string
