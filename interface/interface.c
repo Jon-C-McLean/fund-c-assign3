@@ -90,8 +90,8 @@ void GUI_DataOperationsLoop(database_t *db) {
 void GUI_PrintDataOperationsMenu(database_t *db) {}
 void GUI_ListTables(database_t *db) {}
 void GUI_DisplayTable(database_t *db, char *tableName) {}
-int GUI_CreateRecordForTable(database_t *db, char *tableName) { return 0; }
-int GUI_UpdateRecordForTable(database_t *db, char *tableName) { return 0; }
+status_t GUI_CreateRecordForTable(database_t *db, char *tableName) { return 0; }
+status_t GUI_UpdateRecordForTable(database_t *db, char *tableName) { return 0; }
 
 /* Schema Operations */
 void GUI_SchemaOperationsLoop(database_t *db) {
@@ -107,11 +107,11 @@ void GUI_SchemaOperationsLoop(database_t *db) {
     while(1) {}
 }
 void GUI_PrintSchemaOperationsMenu(database_t *db) {}
-void GUI_CreateTable(database_t *db) {}
-void GUI_DeleteTable(database_t *db) {}
-void GUI_AddColumn(database_t *db) {}
-void GUI_DeleteColumn(database_t *db) {}
-void GUI_DisplayTableSchema(database_t *db) {}
+status_t GUI_CreateTable(database_t *db) { return 0; }
+status_t GUI_DeleteTable(database_t *db) { return 0; }
+status_t GUI_AddColumn(database_t *db) { return 0; }
+status_t GUI_DeleteColumn(database_t *db) { return 0; }
+status_t GUI_DisplayTableSchema(database_t *db) { return 0; }
 
 /* Main (App Loop) */
 void GUI_Main() {
