@@ -6,18 +6,23 @@
 #ifndef SCHEMA_H_
 #define SCHEMA_H_
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "../utils/errors.h"
 
 #define MAX_DB_NAME_SIZE 100U
 #define MAX_TABLE_NAME_SIZE 100U
 #define MAX_COLUMN_NAME_SIZE 100U
+#define MAX_TABLES 25U
 
 /* Schema used to define a user-defined table's structure and metadata */
 
 typedef enum {
     INT,
     DECIMAL,
-    STRING
+    STRING,
+    KEY,
 } column_type_t;
 
 typedef struct __attribute__((__packed__)) {
@@ -57,6 +62,7 @@ status_t SCHEMA_GetTableIdForName(database_schema_t *schema, char *name, int *ta
 status_t SCHEMA_GetTableForId(database_schema_t *schema, int tableId, table_schema_def_t *table);
 
 status_t SCHEMA_DefineTableStructure(database_schema_t *schema, char *name, table_col_def_t *columns, int numColumns);
+status_t SCHEMA_DestroyTableStructure(database_schema_t *schema, int index);
 
 status_t SCHEMA_GetColumnForName(table_schema_def_t *table, char *name, table_col_def_t *column);
 status_t SCHEMA_AddColumn(database_schema_t *schema, int tableId, char *name, column_type_t type, int maxSize, int isPrimaryKey);

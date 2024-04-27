@@ -59,6 +59,10 @@ database_t* GUI_CreateDefaultDatabase(void) {
         printf("Error creating default database\n");
         return NULL;
     }
+
+    printf("Database name: >");
+    INPUT_GetString(db->schema->dbName, MAX_DB_NAME_SIZE);
+
     printf("Database created successfully\n");
     return db;
 }
@@ -145,10 +149,12 @@ void GUI_Main() {
                 break;
             case 7:
                 printf("Exiting...\n");
+                DB_DestroyDatabase(db);
                 exit(0);
                 break;
             case -1:
                 printf("FATAL: Internal error occured\n");
+                DB_DestroyDatabase(db);
                 exit(-1);
                 break;
         }

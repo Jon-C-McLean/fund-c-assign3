@@ -12,6 +12,7 @@ typedef enum {
     kStatus_Success = MAKE_STATUS_CODE(COMMON_GROUP_ID, 0),
     kStatus_Fail = MAKE_STATUS_CODE(COMMON_GROUP_ID, 1),
     kStatus_InvalidArgument = MAKE_STATUS_CODE(COMMON_GROUP_ID, 2),
+    kStatus_AllocError = MAKE_STATUS_CODE(COMMON_GROUP_ID, 3),
 
     kStatus_Schema_UnknownError = MAKE_STATUS_CODE(SCHEMA_GROUP_ID, 0),
     kStatus_Schema_UnknownTableId = MAKE_STATUS_CODE(SCHEMA_GROUP_ID, 1),
