@@ -1,3 +1,7 @@
+/**
+ * @file interface.c
+ * @author Jon McLean (13515869)
+ */
 #include "interface.h"
 
 void GUI_PrintWelcome() {

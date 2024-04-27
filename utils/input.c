@@ -1,3 +1,8 @@
+/**
+ * @file input.c
+ * @author Jon McLean (13515869)
+ */
+
 #include "input.h"
 
 void INPUT_ClearInputBuffer(void) {

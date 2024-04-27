@@ -1,3 +1,8 @@
+/**
+ * @file errors.h
+ * @author Jon McLean (13515869)
+ */
+
 #ifndef ERRORS_H_
 #define ERRORS_H_
 
