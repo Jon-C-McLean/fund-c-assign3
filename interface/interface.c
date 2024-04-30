@@ -123,7 +123,7 @@ void GUI_Main() {
     database_t *db = NULL;
 
     while(1) {
-        int selection = GUI_GetOptionSelection(1, 5, "Please select an option (1-5): ");
+        int selection = GUI_GetOptionSelection(1, 7, "Please select an option (1-7): ");
 
         switch(selection) {
             case 1: /* Load DB from file */
