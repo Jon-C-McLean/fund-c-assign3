@@ -82,14 +82,62 @@ void GUI_DataOperationsLoop(database_t *db) {
     SCREEN_ClearScreen();
     printf("Data Operations\n");
     printf("===============\n");
+    GUI_PrintDataOperationsMenu(db);
 
     while(1) {
-        
+        int selection = GUI_GetOptionSelection(1, 7, "Please select an option (1-7): ");
+
+        switch(selection) {
+            case 1: 
+                GUI_ListTables(db);
+
+                SCREEN_ClearScreen();
+                printf("Data Operations\n");
+                printf("===============\n");
+                GUI_PrintDataOperationsMenu(db);
+                break;
+            case -1:
+                printf("FATAL: Internal error occured\n");
+                return;
+            case 7: 
+                /* Return to main menu*/
+                SCREEN_ClearScreen();
+                return;
+        }
     }
 }
 
-void GUI_PrintDataOperationsMenu(database_t *db) {}
-void GUI_ListTables(database_t *db) {}
+void GUI_PrintDataOperationsMenu(database_t *db) {
+    printf("1. List Tables\n");
+    printf("2. Display Table\n");
+    printf("3. Create Record\n");
+    printf("4. Update Record\n");
+    printf("5. Delete Record\n");
+    printf("6. Find Record(s)\n");
+    printf("7. Return to Main Menu\n");
+}
+
+void GUI_ListTables(database_t *db) {
+    int i = 0;
+    SCREEN_ClearScreen();
+    printf("TableID | %-*s |\n", MAX_TABLE_NAME_SIZE, "Tables");
+
+    char lineBuffer[MAX_TABLE_NAME_SIZE+1] = {'\0'};
+    memset(lineBuffer, '-', MAX_TABLE_NAME_SIZE);
+    printf("--------|-%s-|\n", lineBuffer);
+
+    for(i = 0; i < db->schema->numTables; i++) {
+        printf("%7d | %-*s |\n", i, MAX_TABLE_NAME_SIZE, db->schema->tables[i].tableName);
+
+        char lineBuffer[MAX_TABLE_NAME_SIZE+1] = {'\0'};
+        memset(lineBuffer, '-', MAX_TABLE_NAME_SIZE);
+        printf("--------|-%s-|\n", lineBuffer);
+    }
+
+    INPUT_WaitForAnyKey("\n\nPress any key to return to menu");
+    
+}
+
 void GUI_DisplayTable(database_t *db, char *tableName) {}
 status_t GUI_CreateRecordForTable(database_t *db, char *tableName) { return 0; }
 status_t GUI_UpdateRecordForTable(database_t *db, char *tableName) { return 0; }
@@ -161,6 +209,12 @@ void GUI_Main() {
                 printf("FATAL: Internal error occured\n");
                 DB_DestroyDatabase(db);
                 exit(-1);
+                break;
+            default: 
+                /* 
+                * This should not be reached but just in case it will
+                * run the loop again 
+                */
                 break;
         }
     }

@@ -42,4 +42,11 @@ void INPUT_GetInteger(int* value);
  */
 int INPUT_GetString(char* str, int size);
 
+/**
+ * @brief Waits for the user to press any key
+ * 
+ * @param[in] prompt The promt to display to the user before waiting
+ */
+void INPUT_WaitForAnyKey(char* prompt);
+
 #endif

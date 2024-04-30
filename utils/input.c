@@ -54,3 +54,8 @@ int INPUT_GetString(char* str, int size) { /* Taken from A2 (Jon McLean) */
 
     return length; /* Return user input length */
 }
+
+void INPUT_WaitForAnyKey(char* prompt) {
+    printf("%s", prompt);
+    getchar();
+}
