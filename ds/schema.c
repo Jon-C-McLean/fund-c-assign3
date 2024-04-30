@@ -21,7 +21,7 @@ status_t SCHEMA_CreateDefaultDatabaseSchema(database_schema_t **schema) {
     (*schema)->numTables = 0;
     memset((*schema)->dbName, 0, MAX_DB_NAME_SIZE);
     
-    table_col_def_t employeeColumns[3] = malloc(sizeof(table_col_def_t) * 3);
+    table_col_def_t *employeeColumns = malloc(sizeof(table_col_def_t) * 3);
     memset(employeeColumns, 0, sizeof(table_col_def_t) * 3);
 
     strncpy(employeeColumns[0].columnName, "EmployeeID", MAX_COLUMN_NAME_SIZE);
@@ -39,14 +39,14 @@ status_t SCHEMA_CreateDefaultDatabaseSchema(database_schema_t **schema) {
     employeeColumns[2].size = 10;
     employeeColumns[2].isPrimaryKey = 0;
 
-    employeeTable.numColumns = sizeof(employeeColumns) / sizeof(table_col_def_t); /* i.e. 3 */
+    employeeTable.numColumns = (sizeof(*employeeColumns) * 3) / sizeof(table_col_def_t); /* i.e. 3 */
     employeeTable.columns = employeeColumns;
 
     return SCHEMA_DefineTableStructure(*schema, tableName, employeeColumns, 3);
 }
 
 status_t SCHEMA_DestroyDatabaseSchema(database_schema_t *schema) {
-    int i = 0;
+    /* int i = 0; */
     if(schema == NULL) {
         return kStatus_InvalidArgument;
     }
@@ -80,7 +80,7 @@ status_t SCHEMA_DefineTableStructure(database_schema_t *schema, char *name, tabl
 }
 
 status_t SCHEMA_DestroyTableStructure(database_schema_t *schema, int index) {
-    int i = 0;
+    /*int i = 0;*/
     if(schema == NULL) {
         return kStatus_InvalidArgument;
     }

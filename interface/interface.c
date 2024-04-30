@@ -64,8 +64,30 @@ database_t* GUI_CreateDefaultDatabase(void) {
         return NULL;
     }
 
+
     printf("Database name: >");
     INPUT_GetString(db->schema->dbName, MAX_DB_NAME_SIZE);
+
+    /* Debug: Print schema */
+    printf("Schema:\n");
+    printf("Database Name: %s\n", db->schema->dbName);
+    printf("Tables: %d\n", db->schema->numTables);
+    printf("Table[0] Name: %s\n", db->schema->tables[0].tableName);
+    printf("Table[0] Columns: %d\n", db->schema->tables[0].numColumns);
+    printf("Table[0] Column[0] Name: %s\n", db->schema->tables[0].columns[0].columnName);
+    printf("Table[0] Column[0] Type: %d\n", db->schema->tables[0].columns[0].type);
+    printf("Table[0] Column[0] Size: %d\n", db->schema->tables[0].columns[0].size);
+    printf("Table[0] Column[0] Primary Key: %d\n", db->schema->tables[0].columns[0].isPrimaryKey);
+    printf("Table[0] Column[1] Name: %s\n", db->schema->tables[0].columns[1].columnName);
+    printf("Table[0] Column[1] Type: %d\n", db->schema->tables[0].columns[1].type);
+    printf("Table[0] Column[1] Size: %d\n", db->schema->tables[0].columns[1].size);
+    printf("Table[0] Column[1] Primary Key: %d\n", db->schema->tables[0].columns[1].isPrimaryKey);
+    printf("Table[0] Column[2] Name: %s\n", db->schema->tables[0].columns[2].columnName);
+    printf("Table[0] Column[2] Type: %d\n", db->schema->tables[0].columns[2].type);
+    printf("Table[0] Column[2] Size: %d\n", db->schema->tables[0].columns[2].size);
+    printf("Table[0] Column[2] Primary Key: %d\n", db->schema->tables[0].columns[2].isPrimaryKey);
+
+    printf("Table[0] Tables[0] Row Count: %d", db->tables[0].rows);
 
     printf("Database created successfully\n");
     return db;
