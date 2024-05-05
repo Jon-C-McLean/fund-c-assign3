@@ -96,6 +96,14 @@ void GUI_DataOperationsLoop(database_t *db) {
                 printf("===============\n");
                 GUI_PrintDataOperationsMenu(db);
                 break;
+            case 2:
+                GUI_DisplayTable(db);
+
+                SCREEN_ClearScreen();
+                printf("Data Operations\n");
+                printf("===============\n");
+                GUI_PrintDataOperationsMenu(db);
+                break;
             case -1:
                 printf("FATAL: Internal error occured\n");
                 return;
@@ -138,8 +146,88 @@ void GUI_ListTables(database_t *db) {
     
 }
 
-void GUI_DisplayTable(database_t *db, char *tableName) {}
-status_t GUI_CreateRecordForTable(database_t *db, char *tableName) { return 0; }
+status_t GUI_DisplayTable(database_t *db) {
+    if(db == NULL ) return kStatus_InvalidArgument;
+    SCREEN_ClearScreen();
+
+    /* Get Table Name */
+    char tableName[MAX_TABLE_NAME_SIZE];
+    while(1) {
+        printf("Enter the name of the table you wish to display records for: \n> ");
+        int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
+
+        if (length > 0) break;
+    }
+
+    int tableId = -1;
+    status_t result = SCHEMA_GetTableIdForName(db->schema, tableName, &tableId);
+    if(result != kStatus_Success) return result;
+    if(tableId == -1) return kStatus_Schema_UnknownTableId;
+
+    table_schema_def_t *table = NULL;
+    result = SCHEMA_GetTableForId(db->schema, tableId, &table);
+    if(result != kStatus_Success) return result;
+
+    /* Display Table */
+    printf("Table: %s\n", table->tableName);
+    printf("Columns: %d\n", table->numColumns);
+    printf("\n\n");
+    int i = 0;
+    for(i = 0; i < table->numColumns; i++) {
+        int columnWidth = max(strlen(table->columns[i].columnName), table->columns[i].size);
+        printf("%-*s | ", columnWidth, table->columns[i].columnName);
+    }
+    printf("\n");
+
+    INPUT_WaitForAnyKey("\n\nPress any key to return to menu");
+
+    return kStatus_Success;
+}
+
+status_t GUI_CreateRecordForTable(database_t *db) {
+    if(db == NULL ) return kStatus_InvalidArgument;
+
+    /* Get Table Name */
+    char tableName[MAX_TABLE_NAME_SIZE];
+    while(1) {
+        printf("Enter the name of the table you wish to create a record for: \n> ");
+        int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
+
+        if (length > 0) break;
+    }
+
+    int tableId = -1;
+    status_t result = SCHEMA_GetTableIdForName(db->schema, tableName, &tableId);
+    if(result != kStatus_Success) return result;
+    if(tableId == -1) return kStatus_Schema_UnknownTableId;
+
+    table_schema_def_t *table = NULL;
+    result = SCHEMA_GetTableForId(db->schema, tableId, &table);
+    if(result != kStatus_Success) return result;
+
+    /* Create Record */
+    char data[db->tables[tableId].rowSize];
+    int offset = 0;
+    int i = 0;
+    for(i = 0; i < table->numColumns; i++) {
+        printf("Enter value for %s: ", table->columns[i].columnName);
+        switch(table->columns[i].type) {
+            case INT:
+                INPUT_GetInteger((int *)(data+offset));
+                offset += sizeof(int);
+                break;
+            case STRING:
+                INPUT_GetString(data+offset, table->columns[i].size);
+                offset += table->columns[i].size;
+                break;
+            default:
+                return kStatus_Schema_UnknownError;
+                // return kStatus_Schema_UnknownColumnType;
+        }
+    }
+
+    return DB_InsertRow(db, tableId, &data); // TODO: Change to use tableId
+}
 status_t GUI_UpdateRecordForTable(database_t *db, char *tableName) { return 0; }
 
 /* Schema Operations */
@@ -155,6 +243,7 @@ void GUI_SchemaOperationsLoop(database_t *db) {
 
     while(1) {}
 }
+
 void GUI_PrintSchemaOperationsMenu(database_t *db) {}
 status_t GUI_CreateTable(database_t *db) { return 0; }
 status_t GUI_DeleteTable(database_t *db) { return 0; }

@@ -13,6 +13,7 @@ typedef struct {
     
     int rows;
     int tableId;
+    int rowSize;
 } table_t;
 
 typedef struct {
@@ -73,11 +74,11 @@ status_t DB_DropTable(database_t *db, char *name);
  * @author Jon McLean (13515869)
  * 
  * @param[inout] db The database to insert the row into.
- * @param[in] tableName The name of the table to insert the row into.
+ * @param[in] tableId The ID of the table to insert the row into.
  * @param[in] values The values to insert into the row.
  * @return status_t Status of the operation
  */
-status_t DB_InsertRow(database_t *db, char *tableName, void **values);
+status_t DB_InsertRow(database_t *db, int tableId, void **values);
 
 /**
  * @brief Deletes a row from the specified table.

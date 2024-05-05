@@ -22,6 +22,7 @@ typedef enum {
     kStatus_Schema_UnknownError = MAKE_STATUS_CODE(SCHEMA_GROUP_ID, 0),
     kStatus_Schema_UnknownTableId = MAKE_STATUS_CODE(SCHEMA_GROUP_ID, 1),
     kStatus_Schema_UnknownColumn = MAKE_STATUS_CODE(SCHEMA_GROUP_ID, 2),
+    kStatus_Schema_NoTableWithName = MAKE_STATUS_CODE(SCHEMA_GROUP_ID, 3),
 } status_t;
 
 #endif

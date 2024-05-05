@@ -42,6 +42,8 @@ status_t DB_DestroyDatabase(database_t *db) {
 status_t DB_CreateTable(database_t *db, char *name, table_col_def_t *columns, int numColumns) {
     table_t *tables;
     status_t result;
+    int rowSize = 0;
+    int i = 0;
 
     if(db == NULL || name == NULL || columns == NULL) return kStatus_InvalidArgument;
 
@@ -65,13 +67,48 @@ status_t DB_CreateTable(database_t *db, char *name, table_col_def_t *columns, in
             return kStatus_AllocError ;
         }
     }
+    
+    table_schema_def_t *table = &(db->schema->tables[db->schema->numTables-1]);
+    for(i = 0; i < table->numColumns; i++) {
+        switch(table->columns[i].type) {
+            case INT:
+                rowSize += sizeof(int);
+                break;
+            case STRING:
+                rowSize += table->columns[i].size;
+                break;
+            case KEY:
+                exit(-3); /* XXX: Not implemented */
+            default:
+                return kStatus_Schema_UnknownColumn; /* XXX: Is this the right error? */
+        }
+    }
 
     tables[db->schema->numTables].data = NULL;
     tables[db->schema->numTables].rows = 0;
+    tables[db->schema->numTables].rowSize = rowSize;
     tables[db->schema->numTables].tableId = db->schema->numTables;
 
     db->tables = tables;
-    db->schema->numTables++;
 
+    return kStatus_Success;
+}
+
+status_t DB_InsertRow(database_t *db, int tableId, void **values) {
+    if(db == NULL || values == NULL) return kStatus_InvalidArgument;
+    if(tableId > db->schema->numTables) return kStatus_Schema_UnknownTableId;
+
+
+    if(db->tables[tableId].data == NULL) {
+        db->tables[tableId].data = (char *)malloc(db->tables[tableId].rowSize);
+    } else {
+        db->tables[tableId].data = (char *)realloc(db->tables[tableId].data, 
+            db->tables[tableId].rows * db->tables[tableId].rowSize);
+    }
+
+    if(db->tables[tableId].data == NULL) return kStatus_AllocError;
+    memcpy(db->tables[tableId].data + (db->tables[tableId].rows * db->tables[tableId].rowSize), (char *)*values, db->tables[tableId].rowSize);
+
+    db->tables[tableId].rows++;
     return kStatus_Success;
 }

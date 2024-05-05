@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "../utils/misc.h"
 
 #include "../ds/db.h"
 #include "../utils/input.h"
@@ -96,9 +97,10 @@ void GUI_ListTables(database_t *db);
  * @author Jon McLean (13515869)
  * 
  * @param[in] db The database to display the table from.
- * @param[in] tableName The name of the table to display.
+ * 
+ * @return status_t Status of the operation
  */
-void GUI_DisplayTable(database_t *db, char *tableName);
+status_t GUI_DisplayTable(database_t *db);
 
 /**
  * @brief Prompts the user to create a record for a specified table.
@@ -107,10 +109,9 @@ void GUI_DisplayTable(database_t *db, char *tableName);
  * @author Jon McLean (13515869)
  * 
  * @param[inout] db The database to create the record in.
- * @param[in] tableName The name of the table to create the record in.
  * @return status_t Status of the operation
  */
-status_t GUI_CreateRecordForTable(database_t *db, char *tableName);
+status_t GUI_CreateRecordForTable(database_t *db);
 
 /**
  * @brief Prompts the user to update a record in a specified table.

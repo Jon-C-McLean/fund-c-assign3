@@ -109,3 +109,34 @@ status_t SCHEMA_DestroyTableStructure(database_schema_t *schema, int index) {
     return kStatus_Success;
 }
 
+status_t SCHEMA_GetTableForId(database_schema_t *schema, int tableId, table_schema_def_t **table) { 
+    if(schema == NULL || table == NULL) {
+        return kStatus_InvalidArgument;
+    }
+
+    if(tableId < 0 || tableId >= schema->numTables) {
+        return kStatus_Schema_UnknownTableId;
+    }
+
+    *table = &schema->tables[tableId];
+
+    return kStatus_Success;
+}
+
+status_t SCHEMA_GetTableIdForName(database_schema_t *schema, char *name, int *tableId) {
+    int i = 0;
+    if(schema == NULL || name == NULL || tableId == NULL) {
+        return kStatus_InvalidArgument;
+    }
+
+    for(i = 0; i < schema->numTables; i++) {
+        if(strcmp(schema->tables[i].tableName, name) == 0) {
+            *tableId = i;
+            return kStatus_Success;
+        }
+    }
+
+    *tableId = -1;
+    return kStatus_Schema_UnknownTableId;
+}
+
