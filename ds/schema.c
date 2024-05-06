@@ -6,7 +6,6 @@
 #include "schema.h"
 
 status_t SCHEMA_CreateDefaultDatabaseSchema(database_schema_t **schema) {
-    table_schema_def_t employeeTable;
     char tableName[MAX_TABLE_NAME_SIZE] = "Employee";
 
     if(schema == NULL) {
@@ -39,14 +38,10 @@ status_t SCHEMA_CreateDefaultDatabaseSchema(database_schema_t **schema) {
     employeeColumns[2].size = 12;
     employeeColumns[2].isPrimaryKey = 0;
 
-    employeeTable.numColumns = (sizeof(*employeeColumns) * 3) / sizeof(table_col_def_t); /* i.e. 3 */
-    employeeTable.columns = employeeColumns;
-
     return SCHEMA_DefineTableStructure(*schema, tableName, employeeColumns, 3);
 }
 
 status_t SCHEMA_DestroyDatabaseSchema(database_schema_t *schema) {
-    /* int i = 0; */
     if(schema == NULL) {
         return kStatus_InvalidArgument;
     }
