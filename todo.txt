@@ -1,0 +1,2 @@
+ - Primary Key Duplicate Checks during Insertion
+ - Foreign Key Support
