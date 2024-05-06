@@ -4,10 +4,13 @@
  */
 
 #include "db.h"
+#include <stdio.h>
 
 status_t DB_CreateDefaultDatabase(database_t **db) {
     database_schema_t *schema;
     status_t result;
+    int i, rowSize = 0;
+    table_schema_def_t *table;
 
     if(db == NULL) return kStatus_InvalidArgument;
 
@@ -26,6 +29,24 @@ status_t DB_CreateDefaultDatabase(database_t **db) {
     (*db)->tables[0].data = NULL;
     (*db)->tables[0].rows = 0;
     (*db)->tables[0].tableId = (*db)->schema->numTables-1; /* Table ID is 0 */
+    
+
+    table = &((*db)->schema->tables[0]);
+    for(i = 0; i < table->numColumns; i++) {
+        switch(table->columns[i].type) {
+            case INT:
+                rowSize += sizeof(int);
+                break;
+            case STRING:
+                rowSize += table->columns[i].size;
+                break;
+            case KEY:
+                exit(-3); /* XXX: Not implemented */
+            default:
+                return kStatus_Schema_UnknownColumn; /* XXX: Is this the right error? */
+        }
+    }
+    (*db)->tables[0].rowSize = rowSize;
 
     return kStatus_Success;
 }
@@ -94,10 +115,9 @@ status_t DB_CreateTable(database_t *db, char *name, table_col_def_t *columns, in
     return kStatus_Success;
 }
 
-status_t DB_InsertRow(database_t *db, int tableId, void **values) {
+status_t DB_InsertRow(database_t *db, int tableId, void *values) {
     if(db == NULL || values == NULL) return kStatus_InvalidArgument;
     if(tableId > db->schema->numTables) return kStatus_Schema_UnknownTableId;
-
 
     if(db->tables[tableId].data == NULL) {
         db->tables[tableId].data = (char *)malloc(db->tables[tableId].rowSize);
@@ -107,7 +127,8 @@ status_t DB_InsertRow(database_t *db, int tableId, void **values) {
     }
 
     if(db->tables[tableId].data == NULL) return kStatus_AllocError;
-    memcpy(db->tables[tableId].data + (db->tables[tableId].rows * db->tables[tableId].rowSize), (char *)*values, db->tables[tableId].rowSize);
+    int offset = db->tables[tableId].rows * db->tables[tableId].rowSize;
+    memcpy(db->tables[tableId].data + offset, (char *)values, db->tables[tableId].rowSize);
 
     db->tables[tableId].rows++;
     return kStatus_Success;

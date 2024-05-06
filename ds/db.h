@@ -78,7 +78,7 @@ status_t DB_DropTable(database_t *db, char *name);
  * @param[in] values The values to insert into the row.
  * @return status_t Status of the operation
  */
-status_t DB_InsertRow(database_t *db, int tableId, void **values);
+status_t DB_InsertRow(database_t *db, int tableId, void *values);
 
 /**
  * @brief Deletes a row from the specified table.

@@ -36,7 +36,7 @@ status_t SCHEMA_CreateDefaultDatabaseSchema(database_schema_t **schema) {
 
     strncpy(employeeColumns[2].columnName, "Date of Birth", MAX_COLUMN_NAME_SIZE);
     employeeColumns[2].type = STRING;
-    employeeColumns[2].size = 10;
+    employeeColumns[2].size = 12;
     employeeColumns[2].isPrimaryKey = 0;
 
     employeeTable.numColumns = (sizeof(*employeeColumns) * 3) / sizeof(table_col_def_t); /* i.e. 3 */
@@ -92,7 +92,7 @@ status_t SCHEMA_DestroyTableStructure(database_schema_t *schema, int index) {
     /*if(schema->tables[index] != NULL) {
         free(schema->tables[index].columns);
 
-        // Check if any remaining tables exist
+         //Check if any remaining tables exist
         if(schema->numTables == 1) {
             free(schema->tables);
             schema->tables = NULL;

@@ -86,6 +86,7 @@ void GUI_DataOperationsLoop(database_t *db) {
 
     while(1) {
         int selection = GUI_GetOptionSelection(1, 7, "Please select an option (1-7): ");
+        status_t status = kStatus_Success;
 
         switch(selection) {
             case 1: 
@@ -103,6 +104,11 @@ void GUI_DataOperationsLoop(database_t *db) {
                 printf("Data Operations\n");
                 printf("===============\n");
                 GUI_PrintDataOperationsMenu(db);
+                break;
+            case 3:
+                if((status = GUI_CreateRecordForTable(db)) != kStatus_Success) {
+                    printf("Error creating record %d\n", status);
+                }
                 break;
             case -1:
                 printf("FATAL: Internal error occured\n");
@@ -172,12 +178,37 @@ status_t GUI_DisplayTable(database_t *db) {
     printf("Table: %s\n", table->tableName);
     printf("Columns: %d\n", table->numColumns);
     printf("\n\n");
-    int i = 0;
+    int i = 0, j = 0;
+    int totalWidth = 0;
     for(i = 0; i < table->numColumns; i++) {
         int columnWidth = max(strlen(table->columns[i].columnName), table->columns[i].size);
+        totalWidth += columnWidth;
         printf("%-*s | ", columnWidth, table->columns[i].columnName);
     }
     printf("\n");
+    char lineBuffer[totalWidth+1];
+    memset(lineBuffer, '-', totalWidth);
+    lineBuffer[totalWidth] = '\0';
+
+    for(i = 0; i < db->tables[tableId].rows; i++) {
+        printf("%s\n", lineBuffer);
+        int columnOffset = 0;
+        for(j = 0; j < table->numColumns; j++) {
+            switch(table->columns[j].type) {
+                case INT:
+                    printf("%-*d | ", table->columns[j].size, *((int *)(db->tables[tableId].data + (i * db->tables[tableId].rowSize) + columnOffset)));
+                    columnOffset += sizeof(int);
+                    break;
+                case STRING:
+                    printf("%-*s | ", table->columns[j].size, db->tables[tableId].data + (i * db->tables[tableId].rowSize) + columnOffset);
+                    columnOffset += table->columns[j].size;
+                    break;
+                default:
+                    return kStatus_Schema_UnknownError;
+            }
+        }
+        printf("\n");
+    }
 
     INPUT_WaitForAnyKey("\n\nPress any key to return to menu");
 
@@ -207,6 +238,7 @@ status_t GUI_CreateRecordForTable(database_t *db) {
 
     /* Create Record */
     char data[db->tables[tableId].rowSize];
+    memset(data, 0, db->tables[tableId].rowSize);
     int offset = 0;
     int i = 0;
     for(i = 0; i < table->numColumns; i++) {
@@ -222,11 +254,10 @@ status_t GUI_CreateRecordForTable(database_t *db) {
                 break;
             default:
                 return kStatus_Schema_UnknownError;
-                // return kStatus_Schema_UnknownColumnType;
         }
     }
 
-    return DB_InsertRow(db, tableId, &data); // TODO: Change to use tableId
+    return DB_InsertRow(db, tableId, (void *)data);
 }
 status_t GUI_UpdateRecordForTable(database_t *db, char *tableName) { return 0; }
 
