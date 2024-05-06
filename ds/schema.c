@@ -135,3 +135,30 @@ status_t SCHEMA_GetTableIdForName(database_schema_t *schema, char *name, int *ta
     return kStatus_Schema_UnknownTableId;
 }
 
+status_t SCHEMA_AddColumn(database_schema_t *schema, int tableId, char *name, column_type_t type, int maxSize, int isPrimaryKey) {
+    table_schema_def_t *table;
+    table_col_def_t *columns;
+    if(schema == NULL || name == NULL) {
+        return kStatus_InvalidArgument;
+    }
+
+    if(tableId < 0 || tableId >= schema->numTables) {
+        return kStatus_Schema_UnknownTableId;
+    }
+
+    table = &schema->tables[tableId];
+    columns = (table_col_def_t *)realloc(table->columns, sizeof(table_col_def_t) * (table->numColumns + 1));
+    if(columns == NULL) {
+        return kStatus_AllocError;
+    }
+
+    strncpy(columns[table->numColumns].columnName, name, MAX_COLUMN_NAME_SIZE);
+    columns[table->numColumns].type = type;
+    columns[table->numColumns].size = maxSize;
+    columns[table->numColumns].isPrimaryKey = isPrimaryKey;
+
+    table->columns = columns;
+    table->numColumns++;
+
+    return kStatus_Success;
+}
