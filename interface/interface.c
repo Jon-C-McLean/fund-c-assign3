@@ -108,6 +108,11 @@ void GUI_DataOperationsLoop(database_t *db) {
             case 3:
                 if((status = GUI_CreateRecordForTable(db)) != kStatus_Success) {
                     printf("Error creating record %d\n", status);
+                } else {
+                    SCREEN_ClearScreen();
+                    printf("Data Operations\n");
+                    printf("===============\n");
+                    GUI_PrintDataOperationsMenu(db);
                 }
                 break;
             case -1:
@@ -217,6 +222,8 @@ status_t GUI_DisplayTable(database_t *db) {
 
 status_t GUI_CreateRecordForTable(database_t *db) {
     if(db == NULL ) return kStatus_InvalidArgument;
+
+    SCREEN_ClearScreen();
 
     /* Get Table Name */
     char tableName[MAX_TABLE_NAME_SIZE];
