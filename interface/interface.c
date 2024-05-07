@@ -6,17 +6,17 @@
 
 void GUI_PrintWelcome() {
     SCREEN_ClearScreen();
-    printf(" _______         _______  .______   \n");
-    printf("|   ____|       |       \\ |   _  \\  \n");
-    printf("|  |__    ______|  .--.  ||  |_)  | \n");
-    printf("|   __|  |______|  |  |  ||   _  <  \n");
-    printf("|  |____        |  '--'  ||  |_)  | \n");
-    printf("|_______|       |_______/ |______/  \n");
-    printf("\n");
-    printf("Welcome to E-DB, the customisable employee database system!\n");
-    printf("Written by Jon McLean, Samuel Morgan, Andre Mury, and David Lua\n");
-    printf("===============================================================\n");
-    printf("\n\n\n");
+    SCREEN_Print(" _______         _______  .______   \n", kColor_Red);
+    SCREEN_Print("|   ____|       |       \\ |   _  \\  \n", kColor_Red);
+    SCREEN_Print("|  |__    ______|  .--.  ||  |_)  | \n", kColor_Red);
+    SCREEN_Print("|   __|  |______|  |  |  ||   _  <  \n", kColor_Red);
+    SCREEN_Print("|  |____        |  '--'  ||  |_)  | \n", kColor_Red);
+    SCREEN_Print("|_______|       |_______/ |______/  \n", kColor_Red);
+    SCREEN_Print("\n", kColor_Red);
+    SCREEN_Print("Welcome to E-DB, the customisable employee database system!\n", kColor_Red);
+    SCREEN_Print("Written by Jon McLean, Samuel Morgan, Andre Mury, and David Lua\n", kColor_Red);
+    SCREEN_Print("===============================================================\n", kColor_Red);
+    SCREEN_Print("\n\n\n", kColor_Red);
 }
 
 void GUI_PrintMainMenu() {
@@ -90,7 +90,7 @@ void GUI_DataOperationsLoop(database_t *db) {
 
         switch(selection) {
             case 1: 
-                GUI_ListTables(db);
+                (void)GUI_ListTables(db);
 
                 SCREEN_ClearScreen();
                 printf("Data Operations\n");
@@ -98,7 +98,7 @@ void GUI_DataOperationsLoop(database_t *db) {
                 GUI_PrintDataOperationsMenu(db);
                 break;
             case 2:
-                GUI_DisplayTable(db, NULL, 1);
+                (void)GUI_DisplayTable(db, NULL, 1);
 
                 SCREEN_ClearScreen();
                 printf("Data Operations\n");
@@ -107,7 +107,8 @@ void GUI_DataOperationsLoop(database_t *db) {
                 break;
             case 3:
                 if((status = GUI_CreateRecordForTable(db)) != kStatus_Success) {
-                    printf("Error creating record %d\n", status);
+                    SCREEN_PrintError("An error occured creating \
+                        the record, please try again\n");
                 } else {
                     SCREEN_ClearScreen();
                     printf("Data Operations\n");
@@ -117,7 +118,8 @@ void GUI_DataOperationsLoop(database_t *db) {
                 break;
             case 4:
                 if((status = GUI_UpdateRecordForTable(db)) != kStatus_Success && status != kStatus_Fail) {
-                    printf("Error updating record %d\n", status);
+                    SCREEN_PrintError("An error occured updating \
+                        the record, please try again\n");
                 } else if(status ) {
                     SCREEN_ClearScreen();
                     printf("Data Operations\n");
@@ -126,7 +128,8 @@ void GUI_DataOperationsLoop(database_t *db) {
                 }
                 break;
             case -1:
-                printf("FATAL: Internal error occured\n");
+                SCREEN_PrintError("An internal error has occured, \
+                    please try agian\n");
                 return;
             case 7: 
                 /* Return to main menu*/
@@ -283,6 +286,10 @@ status_t GUI_CreateRecordForTable(database_t *db) {
     return DB_InsertRow(db, tableId, (void *)data);
 }
 status_t GUI_UpdateRecordForTable(database_t *db) {
+    if(db == NULL ) return kStatus_InvalidArgument;
+
+    SCREEN_ClearScreen();
+
     char tableName[MAX_TABLE_NAME_SIZE];
     while(1) {
         printf("Enter the name of the table you wish to create a record for: \n> ");
