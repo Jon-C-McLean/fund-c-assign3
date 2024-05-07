@@ -92,18 +92,6 @@ status_t DB_InsertRow(database_t *db, int tableId, void *values);
 status_t DB_DeleteRow(database_t *db, int tableId, int rowId);
 
 /**
- * @brief Updates a row in the specified table.
- * @author Jon McLean (13515869)
- * 
- * @param[inout] db The database to update the row in.
- * @param[in] tableName The name of the table to update the row in.
- * @param[in] rowId The ID of the row to update.
- * @param[in] values The new values for the row.
- * @return status_t Status of the operation
- */
-status_t DB_UpdateRow(database_t *db, char *tableName, int rowId, void **values);
-
-/**
  * @brief Selects a row from the specified table.
  * @author Jon McLean (13515869)
  * 

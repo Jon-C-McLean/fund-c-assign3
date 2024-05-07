@@ -165,11 +165,6 @@ status_t DB_FindRowWithKey(database_t *db, int tableId, int key, int *index) {
     return kStatus_Fail;
 }
 
-status_t DB_UpdateRow(database_t *db, char *tableName, int rowId, void **values) {
-
-    return kStatus_Success;
-}
-
 status_t DB_DeleteRow(database_t *db, int tableId, int rowId) {
     if(db == NULL) return kStatus_InvalidArgument;
     if(tableId < 0 || rowId < 0) return kStatus_InvalidArgument;
