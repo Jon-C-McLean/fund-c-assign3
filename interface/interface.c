@@ -120,8 +120,12 @@ void GUI_DataOperationsLoop(database_t *db) {
                 if((status = GUI_UpdateRecordForTable(db)) != kStatus_Success && status != kStatus_Fail) {
                     SCREEN_PrintError("An error occured updating \
                         the record, please try again\n");
-                } else if(status ) {
+                } else if (status == kStatus_Success) {
                     SCREEN_ClearScreen();
+                    printf("Data Operations\n");
+                    printf("===============\n");
+                    GUI_PrintDataOperationsMenu(db);
+                } else {
                     printf("Data Operations\n");
                     printf("===============\n");
                     GUI_PrintDataOperationsMenu(db);
@@ -217,13 +221,14 @@ status_t GUI_DisplayTable(database_t *db, char *tableName, int showPrompt) {
         printf("%s\n", lineBuffer);
         int columnOffset = 0;
         for(j = 0; j < table->numColumns; j++) {
+            int columnWidth = max(strlen(table->columns[j].columnName), table->columns[j].size);
             switch(table->columns[j].type) {
                 case INT:
-                    printf("%-*d | ", table->columns[j].size, *((int *)(db->tables[tableId].data + (i * db->tables[tableId].rowSize) + columnOffset)));
+                    printf("%-*d | ", columnWidth, *((int *)(db->tables[tableId].data + (i * db->tables[tableId].rowSize) + columnOffset)));
                     columnOffset += sizeof(int);
                     break;
                 case STRING:
-                    printf("%-*s | ", table->columns[j].size, db->tables[tableId].data + (i * db->tables[tableId].rowSize) + columnOffset);
+                    printf("%-*s | ", columnWidth, db->tables[tableId].data + (i * db->tables[tableId].rowSize) + columnOffset);
                     columnOffset += table->columns[j].size;
                     break;
                 default:
@@ -310,6 +315,10 @@ status_t GUI_UpdateRecordForTable(database_t *db) {
         printf("\nEnter the primary key of the record you wish to update (-1 to cancel): \n>");
         int primaryKey = 0;
         INPUT_GetInteger(&primaryKey);
+
+        if(primaryKey == -1) {
+            return kStatus_Success;
+        }
 
         result = DB_FindRowWithKey(db, tableId, primaryKey, &index);
 
