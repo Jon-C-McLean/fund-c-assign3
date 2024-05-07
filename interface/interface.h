@@ -97,10 +97,12 @@ void GUI_ListTables(database_t *db);
  * @author Jon McLean (13515869)
  * 
  * @param[in] db The database to display the table from.
+ * @param[in] tableName The name of the table to display (Optional).
+ * @param[in] showPrompt Whether or not to show the prompt to the user.
  * 
  * @return status_t Status of the operation
  */
-status_t GUI_DisplayTable(database_t *db);
+status_t GUI_DisplayTable(database_t *db, char *tableName, int showPrompt);
 
 /**
  * @brief Prompts the user to create a record for a specified table.
@@ -124,7 +126,7 @@ status_t GUI_CreateRecordForTable(database_t *db);
  * @param[in] tableName The name of the table to update the record in.
  * @return status_t Status of the operation
  */
-status_t GUI_UpdateRecordForTable(database_t *db, char *tableName);
+status_t GUI_UpdateRecordForTable(database_t *db);
 
 /* Schema Operations */
 

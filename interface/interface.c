@@ -98,7 +98,7 @@ void GUI_DataOperationsLoop(database_t *db) {
                 GUI_PrintDataOperationsMenu(db);
                 break;
             case 2:
-                GUI_DisplayTable(db);
+                GUI_DisplayTable(db, NULL, 1);
 
                 SCREEN_ClearScreen();
                 printf("Data Operations\n");
@@ -109,6 +109,16 @@ void GUI_DataOperationsLoop(database_t *db) {
                 if((status = GUI_CreateRecordForTable(db)) != kStatus_Success) {
                     printf("Error creating record %d\n", status);
                 } else {
+                    SCREEN_ClearScreen();
+                    printf("Data Operations\n");
+                    printf("===============\n");
+                    GUI_PrintDataOperationsMenu(db);
+                }
+                break;
+            case 4:
+                if((status = GUI_UpdateRecordForTable(db)) != kStatus_Success && status != kStatus_Fail) {
+                    printf("Error updating record %d\n", status);
+                } else if(status ) {
                     SCREEN_ClearScreen();
                     printf("Data Operations\n");
                     printf("===============\n");
@@ -157,31 +167,36 @@ void GUI_ListTables(database_t *db) {
     
 }
 
-status_t GUI_DisplayTable(database_t *db) {
+status_t GUI_DisplayTable(database_t *db, char *tableName, int showPrompt) {
     if(db == NULL ) return kStatus_InvalidArgument;
     SCREEN_ClearScreen();
 
     /* Get Table Name */
-    char tableName[MAX_TABLE_NAME_SIZE];
-    while(1) {
-        printf("Enter the name of the table you wish to display records for: \n> ");
-        int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
+    int tableId = 0;
+    status_t result;
+    if(tableName == NULL) {
+        char tableName[MAX_TABLE_NAME_SIZE];
+        while(1) {
+            printf("Enter the name of the table you wish to display records for: \n> ");
+            int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
 
-        if (length > 0) break;
+            if (length > 0) break;
+        }
+
+        result = SCHEMA_GetTableIdForName(db->schema, tableName, &tableId);
+        if(result != kStatus_Success) return result;
+        if(tableId == -1) return kStatus_Schema_UnknownTableId;   
+    } else {
+        result = SCHEMA_GetTableIdForName(db->schema, tableName, &tableId);
+        if(result != kStatus_Success) return result;
+        if(tableId == -1) return kStatus_Schema_UnknownTableId;
     }
-
-    int tableId = -1;
-    status_t result = SCHEMA_GetTableIdForName(db->schema, tableName, &tableId);
-    if(result != kStatus_Success) return result;
-    if(tableId == -1) return kStatus_Schema_UnknownTableId;
 
     table_schema_def_t *table = NULL;
     result = SCHEMA_GetTableForId(db->schema, tableId, &table);
     if(result != kStatus_Success) return result;
 
     /* Display Table */
-    printf("Table: %s\n", table->tableName);
-    printf("Columns: %d\n", table->numColumns);
     printf("\n\n");
     int i = 0, j = 0;
     int totalWidth = 0;
@@ -214,8 +229,9 @@ status_t GUI_DisplayTable(database_t *db) {
         }
         printf("\n");
     }
-
-    INPUT_WaitForAnyKey("\n\nPress any key to return to menu");
+    if(showPrompt) {
+        INPUT_WaitForAnyKey("\n\nPress any key to return to menu");
+    }
 
     return kStatus_Success;
 }
@@ -266,7 +282,68 @@ status_t GUI_CreateRecordForTable(database_t *db) {
 
     return DB_InsertRow(db, tableId, (void *)data);
 }
-status_t GUI_UpdateRecordForTable(database_t *db, char *tableName) { return 0; }
+status_t GUI_UpdateRecordForTable(database_t *db) {
+    char tableName[MAX_TABLE_NAME_SIZE];
+    while(1) {
+        printf("Enter the name of the table you wish to create a record for: \n> ");
+        int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
+
+        if (length > 0) break;
+    }
+
+    int tableId = -1;
+    status_t result = SCHEMA_GetTableIdForName(db->schema, tableName, &tableId);
+    if(result != kStatus_Success) return result;
+    if(tableId == -1) return kStatus_Schema_UnknownTableId;
+
+    (void)GUI_DisplayTable(db, tableName, 0);
+    
+    int index = 0;
+    while(1) {
+        printf("\nEnter the primary key of the record you wish to update (-1 to cancel): \n>");
+        int primaryKey = 0;
+        INPUT_GetInteger(&primaryKey);
+
+        result = DB_FindRowWithKey(db, tableId, primaryKey, &index);
+
+
+        if(result == kStatus_Fail || index == -1) {
+            printf("Unknown row ID\n");
+        }else if (result != kStatus_Success) {
+            return result;
+        }else {
+            break;
+        }
+    }
+
+    char values[db->tables[tableId].rowSize];
+    memset(values, 0, db->tables[tableId].rowSize);
+
+    table_schema_def_t *table = NULL;
+    result = SCHEMA_GetTableForId(db->schema, tableId, &table);
+
+    int offset = 0;
+    int i = 0;
+    for(i = 0; i < table->numColumns; i++) {
+        printf("Enter new value for %s: ", table->columns[i].columnName);
+        switch(table->columns[i].type) {
+            case INT:
+                INPUT_GetInteger((int *)(values+offset));
+                offset += sizeof(int);
+                break;
+            case STRING:
+                INPUT_GetString(values+offset, table->columns[i].size);
+                offset += table->columns[i].size;
+                break;
+            default:
+                return kStatus_Schema_UnknownError;
+        }
+    }
+
+    memcpy(db->tables[tableId].data + (index * db->tables[tableId].rowSize), values, db->tables[tableId].rowSize);
+
+    return kStatus_Success;
+ }
 
 /* Schema Operations */
 void GUI_SchemaOperationsLoop(database_t *db) {

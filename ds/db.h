@@ -142,4 +142,6 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
  */
 status_t DB_LoadFromDisk(database_t *db, char *filename, char *key, int keySize);
 
+status_t DB_FindRowWithKey(database_t *db, int tableId, int key, int *index);
+
 #endif

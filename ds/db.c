@@ -133,3 +133,39 @@ status_t DB_InsertRow(database_t *db, int tableId, void *values) {
     db->tables[tableId].rows++;
     return kStatus_Success;
 }
+
+status_t DB_FindRowWithKey(database_t *db, int tableId, int key, int *index) {
+    if(db == NULL || index == NULL) return kStatus_InvalidArgument;
+
+    status_t result;
+    table_schema_def_t *table = NULL;
+    int i = 0;
+    if((result = SCHEMA_GetTableForId(db->schema, tableId, &table)) != kStatus_Success) {
+        return result;
+    }
+
+    int keyOffset = 0; /* The primary key's data offset in memory */
+
+    for(i = 0; i < table->numColumns; i++) {
+        if(table->columns[i].isPrimaryKey) {
+            break;
+        }
+
+        keyOffset += table->columns[i].size;
+    }
+
+    for(i = 0; i < db->tables[tableId].rows; i++) {
+        if(*(int *)(db->tables[tableId].data + (i * db->tables[tableId].rowSize) + keyOffset) == key) {
+            *index = i;
+            return kStatus_Success;
+        }
+    }
+
+    *index = -1;
+    return kStatus_Fail;
+}
+
+status_t DB_UpdateRow(database_t *db, char *tableName, int rowId, void **values) {
+
+    return kStatus_Success;
+}
