@@ -85,11 +85,11 @@ status_t DB_InsertRow(database_t *db, int tableId, void *values);
  * @author Jon McLean (13515869)
  * 
  * @param[inout] db The database to delete the row from.
- * @param[in] tableName The name of the table to delete the row from.
+ * @param[in] tableId The ID of the table to delete the row from.
  * @param[in] rowId The ID of the row to delete.
  * @return status_t Status of the operation
  */
-status_t DB_DeleteRow(database_t *db, char *tableName, int rowId);
+status_t DB_DeleteRow(database_t *db, int tableId, int rowId);
 
 /**
  * @brief Updates a row in the specified table.

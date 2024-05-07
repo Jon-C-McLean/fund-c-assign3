@@ -128,6 +128,8 @@ status_t GUI_CreateRecordForTable(database_t *db);
  */
 status_t GUI_UpdateRecordForTable(database_t *db);
 
+status_t GUI_RemoveRowForTable(database_t *db);
+
 /* Schema Operations */
 
 /**
@@ -144,10 +146,8 @@ void GUI_SchemaOperationsLoop(database_t *db);
 /**
  * @brief Prints the schema operations menu to the console
  * @author Jon McLean (13515869)
- * 
- * @param[inout] db The database to perform operations on. 
  */
-void GUI_PrintSchemaOperationsMenu(database_t *db);
+void GUI_PrintSchemaOperationsMenu();
 
 /**
  * @brief Prompts the user to create a table in the database. The function

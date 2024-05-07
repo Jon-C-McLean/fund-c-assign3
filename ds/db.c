@@ -169,3 +169,31 @@ status_t DB_UpdateRow(database_t *db, char *tableName, int rowId, void **values)
 
     return kStatus_Success;
 }
+
+status_t DB_DeleteRow(database_t *db, int tableId, int rowId) {
+    if(db == NULL) return kStatus_InvalidArgument;
+    if(tableId < 0 || rowId < 0) return kStatus_InvalidArgument;
+
+    if(tableId > db->schema->numTables) return kStatus_Schema_UnknownTableId;
+    if(rowId > db->tables[tableId].rows) return kStatus_Fail;
+
+    char *newData = (char *)malloc(db->tables[tableId].rowSize * (db->tables[tableId].rows - 1));
+    if(newData == NULL) return kStatus_AllocError;
+
+    int i = 0;
+    int dataIndex = 0;
+    for(i = 0; i < db->tables[tableId].rows; i++) {
+        if(i == rowId) continue;
+
+        (void)memcpy(newData + (dataIndex * db->tables[tableId].rowSize), 
+            db->tables[tableId].data + (i * db->tables[tableId].rowSize), 
+            db->tables[tableId].rowSize);
+        dataIndex++;
+    }
+
+    free(db->tables[tableId].data);
+    db->tables[tableId].data = newData;
+    db->tables[tableId].rows--;
+
+    return kStatus_Success;
+}

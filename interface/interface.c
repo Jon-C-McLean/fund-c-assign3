@@ -131,6 +131,17 @@ void GUI_DataOperationsLoop(database_t *db) {
                     GUI_PrintDataOperationsMenu(db);
                 }
                 break;
+            case 5:
+                if((status = GUI_RemoveRowForTable(db)) != kStatus_Success) {
+                    SCREEN_PrintError("An error occured deleting \
+                        the record, please try again\n");
+                } else {
+                    SCREEN_ClearScreen();
+                    printf("Data Operations\n");
+                    printf("===============\n");
+                    GUI_PrintDataOperationsMenu(db);
+                }
+                break;
             case -1:
                 SCREEN_PrintError("An internal error has occured, \
                     please try agian\n");
@@ -359,7 +370,51 @@ status_t GUI_UpdateRecordForTable(database_t *db) {
     memcpy(db->tables[tableId].data + (index * db->tables[tableId].rowSize), values, db->tables[tableId].rowSize);
 
     return kStatus_Success;
- }
+}
+
+status_t GUI_RemoveRowForTable(database_t *db) {
+    if(db == NULL ) return kStatus_InvalidArgument;
+    SCREEN_ClearScreen();
+
+    char tableName[MAX_TABLE_NAME_SIZE];
+    while(1) {
+        printf("Enter the name of the table you wish to delete a record from: \n> ");
+        int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
+
+        if (length > 0) break;
+    }
+
+    int tableId = -1;
+    status_t result = SCHEMA_GetTableIdForName(db->schema, tableName, &tableId);
+    if(result != kStatus_Success) return result;
+    if(tableId == -1) return kStatus_Schema_UnknownTableId;
+
+    (void)GUI_DisplayTable(db, tableName, 0);
+
+    int index = 0;
+    while(1) {
+        printf("\nEnter the primary key of the record you wish to delete (-1 to cancel): \n>");
+        int primaryKey = 0;
+        INPUT_GetInteger(&primaryKey);
+
+        if(primaryKey == -1) {
+            return kStatus_Success;
+        }
+
+        result = DB_FindRowWithKey(db, tableId, primaryKey, &index);
+
+
+        if(result == kStatus_Fail || index == -1) {
+            printf("Unknown row ID\n");
+        }else if (result != kStatus_Success) {
+            return result;
+        }else {
+            break;
+        }
+    }
+
+    return DB_DeleteRow(db, tableId, index);
+}
 
 /* Schema Operations */
 void GUI_SchemaOperationsLoop(database_t *db) {
@@ -371,6 +426,7 @@ void GUI_SchemaOperationsLoop(database_t *db) {
     SCREEN_ClearScreen();
     printf("Schema Operations\n");
     printf("================\n");
+    GUI_PrintSchemaOperationsMenu();
 
     while(1) {
         int selection = GUI_GetOptionSelection(1, 7, "Please select an option (1-7): ");
@@ -409,7 +465,7 @@ void GUI_SchemaOperationsLoop(database_t *db) {
                     SCREEN_ClearScreen();
                     printf("Schema Operations\n");
                     printf("================\n");
-                    GUI_PrintSchemaOperationsMenu(db);
+                    GUI_PrintSchemaOperationsMenu();
                 }
                 break;
             case -1:
@@ -423,7 +479,7 @@ void GUI_SchemaOperationsLoop(database_t *db) {
     }
 }
 
-void GUI_PrintSchemaOperationsMenu(database_t *db) {
+void GUI_PrintSchemaOperationsMenu() {
     printf("1. Create Table\n");
     printf("2. Delete Table\n");
     printf("3. Add Column\n");
