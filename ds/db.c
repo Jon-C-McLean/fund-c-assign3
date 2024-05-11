@@ -231,7 +231,10 @@ status_t DB_BuildBinaryData(database_t *db, char **data, int *size) {
 
     printf("Calculated size: %d", calcSize);
 
-    char binarized[calcSize];
+    char *binarized = (char *)malloc(calcSize);
+    if(binarized == NULL) return kStatus_AllocError;
+
+    *data = binarized;
     int offset = 0;
     
     memcpy(binarized + offset, &db->schema->numTables, sizeof(db->schema->numTables));
@@ -252,7 +255,18 @@ status_t DB_BuildBinaryData(database_t *db, char **data, int *size) {
         memcpy(binarized + offset, &table->numColumns, sizeof(table->numColumns));
         offset += sizeof(table->numColumns);
 
-        for(j = 0; j < )
+        memcpy(binarized + offset, &db->tables[i].rows, sizeof(db->tables[i].rows));
+        offset += sizeof(db->tables[i].rows);
+
+        for(j = 0; j < table->numColumns; j++) {
+            memcpy(binarized + offset, &(table->columns[j]), sizeof(table_col_def_t));
+            offset += sizeof(table_col_def_t);
+        }
+
+        for(j = 0; j < db->tables[i].rows; j++) {
+            memcpy(binarized + offset, db->tables[i].data + (j * db->tables[i].rowSize), db->tables[i].rowSize);
+            offset += db->tables[i].rowSize;
+        }
     }
 
     return kStatus_Success;
@@ -264,8 +278,21 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
     FILE *file = fopen(filename, "wb");
     if(file == NULL) return kStatus_Fail;
 
-    fwrite(MAGIC, sizeof(MAGIC), 1, file);
+    (void)fwrite(MAGIC, sizeof(MAGIC), 1, file);
 
+    char *binaryData;
+    int binarySize;
+    status_t result = DB_BuildBinaryData(db, &binaryData, &binarySize);
+    if(result != kStatus_Success) {
+        (void)fclose(file);
+        if(binaryData != NULL) free(binaryData);
+        return result;
+    }
+
+    /* Do compression and encryption here */
+
+    (void)fwrite(binaryData, binarySize, 1, file);
+    (void)fclose(file);
 
 
     return kStatus_Success;

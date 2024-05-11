@@ -28,7 +28,8 @@ void GUI_PrintMainMenu() {
     printf("4. Schema Management\n");
     printf("5. View Data/Tables\n");
     printf("6. Perform Query\n");
-    printf("7. Exit\n");
+    printf("7. Save Database\n");
+    printf("8. Exit\n");
 }
 
 int GUI_GetOptionSelection(int min, int max, char* prompt) {
@@ -49,6 +50,25 @@ int GUI_GetOptionSelection(int min, int max, char* prompt) {
 database_t* GUI_LoadDatabase(void) {
     /* TODO: Load from file */
     return NULL;
+}
+
+status_t GUI_SaveDatabase(database_t *db) {
+    SCREEN_ClearScreen();
+    if(db == NULL) {
+        SCREEN_PrintError("No database loaded, please load or create a database\n");
+        return kStatus_Fail;
+    }
+
+    printf("Enter the name of the file you want to save the DB to: \n> ");
+    char fileName[256];
+    INPUT_GetString(fileName, 256);
+
+    status_t result = DB_SaveDatabase(db, fileName, 0, NULL, 0);
+    if(result != kStatus_Success) {
+        SCREEN_PrintError("Error saving database\n");
+    }
+
+    return result;
 }
 
 database_t* GUI_CreateDefaultDatabase(void) {
@@ -612,7 +632,7 @@ void GUI_Main() {
     database_t *db = NULL;
 
     while(1) {
-        int selection = GUI_GetOptionSelection(1, 7, "Please select an option (1-7): ");
+        int selection = GUI_GetOptionSelection(1, 8, "Please select an option (1-7): ");
 
         switch(selection) {
             case 1: /* Load DB from file */
@@ -642,6 +662,13 @@ void GUI_Main() {
                 printf("Perform Query\n");
                 break;
             case 7:
+                if(GUI_SaveDatabase(db) == kStatus_Success) {
+                    SCREEN_ClearScreen();
+                }
+
+                GUI_PrintMainMenu();
+                break;
+            case 8:
                 printf("Exiting...\n");
                 DB_DestroyDatabase(db);
                 exit(0);

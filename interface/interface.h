@@ -51,6 +51,16 @@ int GUI_GetOptionSelection(int min, int max, char* prompt);
 database_t* GUI_LoadDatabase(void);
 
 /**
+ * @brief Prompts the user to enter a file path to save the database to.
+ * This function will then save the database to the specified file path.
+ * @author Jon McLean (13515869)
+ * 
+ * @param[in] db The database to save 
+ * @return status_t Status of the operation
+ */
+status_t GUI_SaveDatabase(database_t *db);
+
+/**
  * @brief Prompts the user to create a default database and name it. This
  * function will then return a pointer to the allocated region.
  * @author Jon McLean (13515869)
