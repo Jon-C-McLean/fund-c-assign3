@@ -6,6 +6,8 @@
 #include "db.h"
 #include <stdio.h>
 
+const unsigned char MAGIC[] = {0x6A, 0x6F, 0x6E, 0x20, 0x64, 0x62, 0x0A};
+
 status_t DB_CreateDefaultDatabase(database_t **db) {
     database_schema_t *schema;
     status_t result;
@@ -189,6 +191,82 @@ status_t DB_DeleteRow(database_t *db, int tableId, int rowId) {
     free(db->tables[tableId].data);
     db->tables[tableId].data = newData;
     db->tables[tableId].rows--;
+
+    return kStatus_Success;
+}
+
+status_t DB_BuildBinaryData(database_t *db, char **data, int *size) {
+    if(db == NULL || data == NULL || size == NULL) return kStatus_InvalidArgument;
+
+    /* 
+     * 1. Calculate binary size
+     * 2. Allocate memory
+     * 3. Write binarized schema
+     * 4. Write binarized data
+     * 5. Return
+    */
+   int calcSize = 0, i = 0, j = 0;
+
+    /* Calculate binary size */
+    calcSize += sizeof(db->schema->numTables); /* Number of tables */
+    calcSize += sizeof(db->schema->dbName);
+    
+    for(i = 0; i < db->schema->numTables; i++) {
+        calcSize += sizeof(db->schema->tables[i].tableId);
+        calcSize += MAX_TABLE_NAME_SIZE;
+        calcSize += sizeof(db->schema->tables[i].numColumns);
+
+        for(j = 0; j < db->schema->tables[i].numColumns; j++) {
+            calcSize += MAX_COLUMN_NAME_SIZE;
+            calcSize += sizeof(column_type_t);
+            calcSize += sizeof(db->schema->tables[i].columns[j].isPrimaryKey);
+            calcSize += sizeof(db->schema->tables[i].columns[j].size);
+        }
+
+        calcSize += db->tables[i].rows * db->tables[i].rowSize;
+        calcSize += sizeof(db->tables[i].tableId);
+        calcSize += sizeof(db->tables[i].rowSize);
+        calcSize += sizeof(db->tables[i].rows);
+    }
+
+    printf("Calculated size: %d", calcSize);
+
+    char binarized[calcSize];
+    int offset = 0;
+    
+    memcpy(binarized + offset, &db->schema->numTables, sizeof(db->schema->numTables));
+    offset += sizeof(db->schema->numTables);
+
+    memcpy(binarized + offset, db->schema->dbName, sizeof(db->schema->dbName));
+    offset += sizeof(db->schema->dbName);
+
+    for(i = 0; i < db->schema->numTables; i++) {
+        table_schema_def_t *table = &(db->schema->tables[i]);
+
+        memcpy(binarized + offset, table->tableName, sizeof(table->tableName));
+        offset += sizeof(table->tableName);
+
+        memcpy(binarized + offset, &table->tableId, sizeof(table->tableId));
+        offset += sizeof(table->tableId);
+
+        memcpy(binarized + offset, &table->numColumns, sizeof(table->numColumns));
+        offset += sizeof(table->numColumns);
+
+        for(j = 0; j < )
+    }
+
+    return kStatus_Success;
+}
+
+status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key, int keySize) {
+    if(db == NULL || filename == NULL) return kStatus_InvalidArgument;
+
+    FILE *file = fopen(filename, "wb");
+    if(file == NULL) return kStatus_Fail;
+
+    fwrite(MAGIC, sizeof(MAGIC), 1, file);
+
+
 
     return kStatus_Success;
 }

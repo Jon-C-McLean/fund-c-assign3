@@ -105,6 +105,8 @@ status_t DB_SelectRow(database_t *db, char *tableName, int rowId, void **values)
 
 /* TODO: Search/select functions */
 
+status_t DB_BuildBinaryData(database_t *db, char **data, int *size);
+
 /**
  * @brief Saves the database to disk.
  * @author Jon McLean (13515869)

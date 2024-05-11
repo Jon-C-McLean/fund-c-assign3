@@ -220,7 +220,7 @@ status_t GUI_DisplayTable(database_t *db, char *tableName, int showPrompt) {
     int totalWidth = 0;
     for(i = 0; i < table->numColumns; i++) {
         int columnWidth = max(strlen(table->columns[i].columnName), table->columns[i].size);
-        totalWidth += columnWidth;
+        totalWidth += columnWidth + 3;
         printf("%-*s | ", columnWidth, table->columns[i].columnName);
     }
     printf("\n");
@@ -248,6 +248,8 @@ status_t GUI_DisplayTable(database_t *db, char *tableName, int showPrompt) {
         }
         printf("\n");
     }
+    printf("%s\n", lineBuffer);
+
     if(showPrompt) {
         INPUT_WaitForAnyKey("\n\nPress any key to return to menu");
     }
