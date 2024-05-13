@@ -379,13 +379,12 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
     (void)fread(iv, sizeof(iv), 1, file);
 
     (void)fseek(file, 0, SEEK_END);
-    int dataSize = ftell(file) - sizeof(originalSize) - sizeof(iv) - sizeof(MAGIC);
-    (void)fseek(file, sizeof(MAGIC) + sizeof(originalSize) + sizeof(iv), SEEK_SET);
+    int dataSize = ftell(file) - sizeof(originalSize) - sizeof(iv) - sizeof(MAGIC) - sizeof(COMP_MAGIC);
+    (void)fseek(file, sizeof(MAGIC) + sizeof(originalSize) + sizeof(iv) + sizeof(COMP_MAGIC), SEEK_SET);
 
     char *binaryData = (char *)malloc(dataSize);
     if(binaryData == NULL) {
         (void)fclose(file);
-        printf("Cuck 4\n");
         return kStatus_AllocError;
     }
 
@@ -395,7 +394,7 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
         /* Decompress using RLE */
         char *decompressedData;
         int decompressedSize;
-        RLE_Compress(binaryData, dataSize - sizeof(originalSize) - sizeof(iv) - sizeof(MAGIC), &decompressedData, &decompressedSize);
+        RLE_Decompress(binaryData, dataSize, &decompressedData, &decompressedSize);
 
         free(binaryData);
         binaryData = decompressedData;
@@ -408,14 +407,9 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
         isEncrypted = 1;
     }
 
-    FILE* debugFile = fopen("debug.data", "wb");
-    (void)fwrite(binaryData, dataSize, 1, debugFile);
-    (void)fclose(debugFile);
-
     if(key == NULL && isEncrypted) {
         (void)fclose(file);
         free(binaryData);
-        printf("Cuck\n");
         return kStatus_IO_MissingKey;
     }
 
@@ -423,7 +417,6 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
         if(key == NULL) {
             (void)fclose(file);
             free(binaryData);
-            printf("Cuck 2\n");
             return kStatus_Fail;
         }
         aes_context_t context;
@@ -435,7 +428,6 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
         if(memcmp(binaryData + originalSize, ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC)) != 0) {
             (void)fclose(file);
             free(binaryData);
-            printf("Cuck 3\n");
             return kStatus_IO_BadKey;
         }
     }

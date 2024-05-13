@@ -49,6 +49,11 @@ void RLE_Decompress(char *input, int dataSize, char **output, int *length) {
         int j = 0;
         for(j = 0; j < count; j++) {
             outputBuffer[outputLength++] = value;
+
+            /* Reallocate if at end of buffer */
+            if(outputLength % dataSize == 0) {
+                outputBuffer = (char *)realloc(outputBuffer, outputLength + dataSize);
+            }
         }
     }
 
