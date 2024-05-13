@@ -440,6 +440,16 @@ status_t GUI_UpdateRecordForTable(database_t *db) {
             case INT:
                 INPUT_GetInteger((int *)(values+offset));
                 offset += sizeof(int);
+
+                if(table->columns[i].isPrimaryKey) {
+                    int index = 0;
+                    result = DB_FindRowWithKey(db, tableId, *((int *)(data+offset-sizeof(int))), &index);
+                    if(result == kStatus_Success) {
+                        SCREEN_PrintError("Primary key already exists\n");
+                        return kStatus_Fail;
+                    }
+                }
+
                 break;
             case STRING:
                 INPUT_GetString(values+offset, table->columns[i].size);
