@@ -57,7 +57,13 @@ status_t DB_CreateDefaultDatabase(database_t **db) {
 status_t DB_DestroyDatabase(database_t *db) {
     if(db == NULL) return kStatus_InvalidArgument;
 
+    int i = 0;
+    for(i = 0; i < db->schema->numTables; i++) {
+        if(db->tables[i].data != NULL) free(db->tables[i].data);
+    }
+    
     SCHEMA_DestroyDatabaseSchema(db->schema);
+
     free(db);
 
     return kStatus_Success;
