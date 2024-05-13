@@ -9,6 +9,7 @@
 #include "../ds/db.h"
 #include "../utils/input.h"
 #include "../utils/screen.h"
+#include "../enc/aes.h"
 
 /**
  * @brief Prints the welcome screen ASCII art to the console.

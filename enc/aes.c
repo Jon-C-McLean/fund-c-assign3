@@ -8,9 +8,17 @@
 #define AES_BOX_SIZE 256U
 
 #define AES_NUM_COLS 4U
-
 #define AES_NUM_WORDS 4U
 #define AES_NUM_ROUNDS 10U
+
+#define XTIME(x) ((x << 1) ^ (((x >> 7) & 1) * 0x1b))
+
+#define MULTIPLY(a, b) \
+        (((b & 1) * a) ^ \
+        ((b >> 1 & 1) * XTIME(a)) ^ \
+        ((b >> 2 & 1) * XTIME(XTIME(a))) ^ \
+        ((b >> 3 & 1) * XTIME(XTIME(XTIME(a)))) ^ \
+        ((b >> 4 & 1) * XTIME(XTIME(XTIME(XTIME(a)))))) \
 
 typedef unsigned char u8;
 typedef unsigned int u32;
@@ -92,3 +100,239 @@ static const u8 rcon[11] = {
 };
 
 /* Private Functions */
+
+void AES_PerformKeyExpansion(u8 *roundKey, u8 *key) {
+    unsigned int i,j,k;
+    u8 temp[4];
+
+    for(i = 0; i < AES_NUM_WORDS; i++) {
+        roundKey[(i * 4) + 0] = key[(i * 4) + 0];
+        roundKey[(i * 4) + 1] = key[(i * 4) + 1];
+        roundKey[(i * 4) + 2] = key[(i * 4) + 2];
+        roundKey[(i * 4) + 3] = key[(i * 4) + 3];
+    }
+
+    for(i = AES_NUM_WORDS; i < AES_NUM_COLS + (AES_NUM_ROUNDS + 1); i++) {
+        k = (i - 1) * 4;
+        temp[0] = roundKey[k + 0];
+        temp[1] = roundKey[k + 1];
+        temp[2] = roundKey[k + 2];
+        temp[3] = roundKey[k + 3];
+
+        if(i % AES_NUM_WORDS == 0) {
+            const u8 u = temp[0];
+            temp[0] = temp[1];
+            temp[1] = temp[2];
+            temp[2] = temp[3];
+            temp[3] = u;
+
+            temp[0] = sbox[temp[0]];
+            temp[1] = sbox[temp[1]];
+            temp[2] = sbox[temp[2]];
+            temp[3] = sbox[temp[3]];
+
+            temp[0] = temp[0] ^ rcon[i/AES_NUM_WORDS];
+        }
+
+    }
+
+    j = i * 4;
+    k = (i - AES_NUM_WORDS) * 4;
+    roundKey[j] = roundKey[k] ^ temp[0];
+    roundKey[j + 1] = roundKey[k + 1] ^ temp[1];
+    roundKey[j + 2] = roundKey[k + 2] ^ temp[2];
+    roundKey[j + 3] = roundKey[k + 3] ^ temp[3];
+}
+
+void AES_AddRoundKey(u8 round, state_t *state, const u8 *roundKey) {
+    u8 i, j;
+
+    for(i = 0; i < 4; i++) {
+        for(j = 0; j < 4; j++) {
+            (*state)[i][j] ^= roundKey[(round * AES_NUM_COLS * 4) + (i * AES_NUM_COLS) + j];
+        }
+    }
+}
+
+void AES_SubBytes(state_t *state) {
+    u8 i,j;
+    for(i = 0; i < 4; i++) {
+        for(j = 0; j < 4; j++) {
+            (*state)[j][i] = sbox[(*state)[j][i]];
+        }
+    }
+}
+
+void AES_ShiftRows(state_t *state) {
+    u8 temp;
+
+    /* Rotate first row */
+    temp = (*state)[0][1];
+    (*state)[0][1] = (*state)[1][1];
+    (*state)[1][1] = (*state)[2][1];
+    (*state)[2][1] = (*state)[3][1];
+    (*state)[3][1] = temp;
+
+    /* Rotate 2 columns to left */
+    temp = (*state)[0][2];
+    (*state)[0][2] = (*state)[2][2];
+    (*state)[2][2] = temp;
+
+    /* Rotate 3 columns to left */
+    temp = (*state)[0][3];
+    (*state)[0][3] = (*state)[3][3];
+    (*state)[3][3] = (*state)[2][3];
+    (*state)[2][3] = (*state)[1][3];
+    (*state)[1][3] = temp;
+}
+
+void AES_MixCols(state_t *state) {
+    u8 i;
+    u8 tmp, tm, t;
+
+    for(i = 0; i < 4; i++) {
+        t = (*state)[i][0];
+        tmp = (*state)[i][0] ^ (*state)[i][1] ^ (*state)[i][2] ^ (*state)[i][3];
+
+        tm = (*state)[i][0] ^ (*state)[i][1];
+        tm = XTIME(tm);
+        (*state)[i][0] ^= tm ^ tmp;
+
+        tm = (*state)[i][1] ^ (*state)[i][2];
+        tm = XTIME(tm);
+        (*state)[i][1] ^= tm ^ tmp;
+
+        tm = (*state)[i][2] ^ (*state)[i][3];
+        tm = XTIME(tm);
+        (*state)[i][2] ^= tm ^ tmp;
+
+        tm = (*state)[i][3] ^ t;
+        tm = XTIME(tm);
+        (*state)[i][3] ^= tm ^ tmp;
+    }
+}
+
+void AES_InverseMixCols(state_t *state) {
+    int i;
+    u8 a,b,c,d;
+
+    for(i = 0; i < 4; i++) {
+        a = (*state)[i][0];
+        b = (*state)[i][1];
+        c = (*state)[i][2];
+        d = (*state)[i][3];
+
+        (*state)[i][0] = MULTIPLY(a, 0x0e) ^ MULTIPLY(b, 0x0b) ^ MULTIPLY(c, 0x0a) ^ MULTIPLY(d, 0x09);
+        (*state)[i][1] = MULTIPLY(a, 0x09) ^ MULTIPLY(b, 0x0e) ^ MULTIPLY(c, 0x0b) ^ MULTIPLY(d, 0x0d);
+        (*state)[i][2] = MULTIPLY(a, 0x0d) ^ MULTIPLY(b, 0x09) ^ MULTIPLY(c, 0x0e) ^ MULTIPLY(d, 0x0b);
+        (*state)[i][3] = MULTIPLY(a, 0x0b) ^ MULTIPLY(b, 0x0d) ^ MULTIPLY(c, 0x09) ^ MULTIPLY(d, 0x0e);
+    }   
+}
+
+void AES_InverseSubBytes(state_t *state) {
+    u8 i,j;
+    for(i = 0; i < 4; i++) {
+        for(j = 0; j < 4; j++) {
+            (*state)[j][i] = rsbox[(*state)[j][i]];
+        }
+    }
+}
+
+void AES_InverseShiftRows(state_t *state) {
+    u8 temp;
+
+    temp = (*state)[3][1];
+    (*state)[3][1] = (*state)[2][1];
+    (*state)[2][1] = (*state)[1][1];
+    (*state)[1][1] = (*state)[0][1];
+    (*state)[0][1] = temp;
+
+    temp = (*state)[0][2];
+    (*state)[0][2] = (*state)[2][2];
+    (*state)[2][2] = temp;
+
+    temp = (*state)[1][2];
+    (*state)[1][2] = (*state)[3][2];
+    (*state)[3][2] = temp;
+
+    temp = (*state)[0][3];
+    (*state)[0][3] = (*state)[1][3];
+    (*state)[1][3] = (*state)[2][3];
+    (*state)[2][3] = (*state)[3][3];
+    (*state)[3][3] = temp;
+}
+
+void AES_Cipher(state_t *state, const u8 *roundKey) {
+    u8 round = 0;
+
+    AES_AddRoundKey(round, state, roundKey);
+
+    for(round = 1; ; round++) {
+        AES_SubBytes(state);
+        AES_ShiftRows(state);
+        if(round == AES_NUM_ROUNDS) {
+            break;
+        }
+        AES_MixCols(state);
+        AES_AddRoundKey(round, state, roundKey);
+    }
+
+    AES_AddRoundKey(AES_NUM_ROUNDS, state, roundKey);
+}
+
+void AES_InverseCipher(state_t *state, const u8 *roundKey) {
+    u8 round = 0;
+
+    AES_AddRoundKey(AES_NUM_ROUNDS, state, roundKey);
+
+    for(round = AES_NUM_ROUNDS - 1; ; round--) {
+        AES_InverseShiftRows(state);
+        AES_InverseSubBytes(state);
+        AES_AddRoundKey(round, state, roundKey);
+        if(round == 0) {
+            break;
+        }
+        AES_InverseMixCols(state);
+    }
+}
+
+void AES_XorIV(u8* buffer, const u8 *iv) {
+    u8 i;
+    for(i = 0; i < AES_BLOCK_SIZE; i++) {
+        buffer[i] ^= iv[i];
+    }
+}
+
+/* Public Functions */
+void AES_InitContext(aes_context_t *ctx, unsigned char *key, unsigned char *iv) {
+    AES_PerformKeyExpansion(ctx->roundKey, key);
+    memcpy(ctx->iv, iv, AES_BLOCK_SIZE);
+}
+
+void AES_Encrypt(aes_context_t *ctx, unsigned char *input, size_t size) {
+    size_t i;
+    u8 *iv = ctx->iv;
+
+    for(i = 0; i < size; i += AES_BLOCK_SIZE) {
+        AES_XorIV(input, iv);
+        AES_Cipher((state_t *)input, ctx->roundKey);
+        iv = input;
+        input += AES_BLOCK_SIZE;
+    }   
+
+    memcpy(ctx->iv, iv, AES_BLOCK_SIZE);
+}
+
+void AES_Decrypt(aes_context_t *ctx, unsigned char *input, size_t size) {
+    size_t i;
+    u8 nextIv[AES_BLOCK_SIZE];
+
+    for(i = 0; i < size; i += AES_BLOCK_SIZE) {
+        memcpy(nextIv, input, AES_BLOCK_SIZE);
+        AES_InverseCipher((state_t *)input, ctx->roundKey);
+        AES_XorIV(input, ctx->iv);
+        memcpy(ctx->iv, nextIv, AES_BLOCK_SIZE);
+        input += AES_BLOCK_SIZE;
+    }
+}
+

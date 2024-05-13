@@ -63,7 +63,27 @@ status_t GUI_SaveDatabase(database_t *db) {
     char fileName[256];
     INPUT_GetString(fileName, 256);
 
-    status_t result = DB_SaveDatabase(db, fileName, 0, NULL, 0);
+    printf("Please select whether you want compression and encryption\n");
+    printf("1. Encryption \n");
+    printf("2. Encryption and Compression\n");
+    printf("3. None\n");
+
+    int selection = GUI_GetOptionSelection(1, 3, "Please select an option (1-3): ");
+    if(selection == -1) {
+        SCREEN_PrintError("An internal error has occured, please try agian\n");
+        return kStatus_Fail;
+    }
+
+    int compress = selection == 2 ? 1 : 0;
+    int encrypt = selection != 3 ? 1 : 0;
+
+    char key[AES_KEY_SIZE / 8];
+    if(encrypt) {
+        printf("Enter the key to use for encryption (%d bytes): \n> ", AES_KEY_SIZE / 8);
+        INPUT_GetString(key, AES_KEY_SIZE / 8);
+    }
+
+    status_t result = DB_SaveDatabase(db, fileName, compress, encrypt ? key : NULL, sizeof(key));
     if(result != kStatus_Success) {
         SCREEN_PrintError("Error saving database\n");
     }

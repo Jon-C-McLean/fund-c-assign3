@@ -6,9 +6,12 @@
 #ifndef ENC_AES_H_
 #define ENC_AES_H_
 
+#include <stdlib.h>
+#include <string.h>
+
 #define AES_BLOCK_SIZE 16U
-#define AES_KEY_SIZE 128U // 128 bit key size (16 bytes)
-#define AES_EXP_KEY_SIZE 176U // 176 bytes for expanded key
+#define AES_KEY_SIZE 128U /* 128 bit key size (16 bytes) */
+#define AES_EXP_KEY_SIZE 176U /* 176 bytes for expanded key */
 
 typedef struct {
     unsigned char roundKey[AES_EXP_KEY_SIZE]; /* AES Round Key */
@@ -29,13 +32,13 @@ void AES_InitContext(aes_context_t *ctx, unsigned char *key, unsigned char *iv);
  * 
  * @param[inout] ctx 
  */
-void AES_Encrypt(aes_context_t *ctx, unsigned char *input, unsigned char *output);
+void AES_Encrypt(aes_context_t *ctx, unsigned char *input, size_t size);
 
 /**
  * @brief Decrypt the input buffer using the AES context (i.e. key and IV)
  * 
  * @param[inout] ctx The context to use
  */
-void AES_Decrypt(aes_context_t *ctx, unsigned char *input, unsigned char *output);
+void AES_Decrypt(aes_context_t *ctx, unsigned char *input, size_t size);
 
 #endif

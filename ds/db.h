@@ -7,6 +7,8 @@
 #define DB_H_
 
 #include "schema.h"
+#include "../enc/aes.h"
+#include "../utils/rand.h"
 
 typedef struct {
     char *data;

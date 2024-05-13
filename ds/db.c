@@ -282,15 +282,33 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
 
     char *binaryData;
     int binarySize;
+
     status_t result = DB_BuildBinaryData(db, &binaryData, &binarySize);
+
+    int originalSize = binarySize;
+    if(binarySize % 16 != 0) { /* Pad data to be multiple of 16 */
+        binarySize += 16 - (binarySize % 16);
+        binaryData = (char *)realloc(binaryData, binarySize);
+    }
+
     if(result != kStatus_Success) {
         (void)fclose(file);
         if(binaryData != NULL) free(binaryData);
         return result;
     }
 
-    /* Do compression and encryption here */
+    aes_context_t context;
+    unsigned char iv[16] = {0};
+    if(key != NULL) {
+        RAND_GenerateInitVector(iv, 16);
+        AES_InitContext(&context, (unsigned char *)key, iv);
 
+        AES_Encrypt(&context, (unsigned char *)binaryData, binarySize);
+    }
+
+    /* Do compression and encryption here */
+    fwrite(&originalSize, sizeof(originalSize), 1, file); /* Save actual size */
+    fwrite(iv, sizeof(iv), 1, file); /* Save IV */
     (void)fwrite(binaryData, binarySize, 1, file);
     (void)fclose(file);
 
