@@ -181,7 +181,7 @@ void AES_MixCols(state_t *state) {
         
         tm = (*state)[i][2] ^ (*state)[i][3];
         tm = XTIME(tm);
-        (*state)[i][2] ^= tm ^ tmp; // fucks up in this block
+        (*state)[i][2] ^= tm ^ tmp;
 
         tm = (*state)[i][3] ^ t;
         tm = XTIME(tm);
@@ -282,7 +282,6 @@ void AES_XorIV(u8* buffer, const u8 *iv) {
 /* Public Functions */
 void AES_InitContext(aes_context_t *ctx, unsigned char *key, unsigned char *iv) {
     AES_PerformKeyExpansion(ctx->roundKey, key);
-    // KeyExpansion(ctx->roundKey, key);
     memcpy(ctx->iv, iv, AES_BLOCK_SIZE);
 }
 

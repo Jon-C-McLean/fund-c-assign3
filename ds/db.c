@@ -230,8 +230,6 @@ status_t DB_BuildBinaryData(database_t *db, char **data, int *size) {
         calcSize += sizeof(db->tables[i].rows);
     }
 
-    printf("Calculated size: %d", calcSize);
-
     char *binarized = (char *)malloc(calcSize);
     if(binarized == NULL) return kStatus_AllocError;
 
@@ -362,11 +360,7 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
 
     int isEncrypted = 0;
 
-    printf("Original size: %d\n", originalSize);
-
     if(memcmp(binaryData + originalSize, ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC)) != 0) {
-        printf("%s\n", binaryData + originalSize);
-        printf("File is encrypted\n");
         isEncrypted = 1;
     }
 
@@ -383,8 +377,9 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
             return kStatus_Fail;
         }
         aes_context_t context;
+
         AES_InitContext(&context, (unsigned char *)key, iv);
-        AES_Decrypt(&context, (unsigned char *)binaryData, originalSize);
+        AES_Decrypt(&context, (unsigned char *)binaryData, dataSize);
 
         /* Check if decryption was successful */
         if(memcmp(binaryData + originalSize, ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC)) != 0) {
