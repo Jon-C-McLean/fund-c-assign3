@@ -443,7 +443,7 @@ status_t GUI_UpdateRecordForTable(database_t *db) {
 
                 if(table->columns[i].isPrimaryKey) {
                     int index = 0;
-                    result = DB_FindRowWithKey(db, tableId, *((int *)(data+offset-sizeof(int))), &index);
+                    result = DB_FindRowWithKey(db, tableId, *((int *)(values+offset-sizeof(int))), &index);
                     if(result == kStatus_Success) {
                         SCREEN_PrintError("Primary key already exists\n");
                         return kStatus_Fail;
