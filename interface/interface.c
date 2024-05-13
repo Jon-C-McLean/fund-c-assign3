@@ -66,11 +66,11 @@ database_t* GUI_LoadDatabase(void) {
         return NULL;
     }
 
-    char key[AES_KEY_SIZE / 8];
+    char key[AES_KEY_SIZE];
     memset(key, 0, sizeof(key));
     if(selection == 1) {
-        printf("Enter the key to use for decryption (%d bytes): \n> ", AES_KEY_SIZE / 8);
-        INPUT_GetString(key, AES_KEY_SIZE / 8);
+        printf("Enter the key to use for decryption (%d bytes): \n> ", AES_KEY_SIZE);
+        INPUT_GetString(key, AES_KEY_SIZE);
     }
 
     status_t result = DB_LoadFromDisk(&db, fileName, selection == 1 ? key : NULL, sizeof(key));
@@ -108,11 +108,11 @@ status_t GUI_SaveDatabase(database_t *db) {
     int compress = selection == 2 ? 1 : 0;
     int encrypt = selection != 3 ? 1 : 0;
 
-    char key[AES_KEY_SIZE / 8];
+    char key[AES_KEY_SIZE];
     memset(key, 0, sizeof(key));
     if(encrypt) {
-        printf("Enter the key to use for encryption (%d bytes): \n> ", AES_KEY_SIZE / 8);
-        INPUT_GetString(key, AES_KEY_SIZE / 8);
+        printf("Enter the key to use for encryption (%d bytes): \n> ", AES_KEY_SIZE);
+        INPUT_GetString(key, AES_KEY_SIZE);
     }
 
     status_t result = DB_SaveDatabase(db, fileName, compress, encrypt ? key : NULL, sizeof(key));
