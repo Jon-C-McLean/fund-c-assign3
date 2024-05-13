@@ -48,8 +48,23 @@ int GUI_GetOptionSelection(int min, int max, char* prompt) {
 }
 /* Startup Operations */
 database_t* GUI_LoadDatabase(void) {
-    /* TODO: Load from file */
-    return NULL;
+    SCREEN_ClearScreen();
+    
+    database_t *db = NULL;
+
+    printf("Enter the name of the file you want to load the DB from: \n> ");
+    char fileName[256];
+    INPUT_GetString(fileName, 256);
+
+    /* TODO: Enc and compression */
+
+    status_t result = DB_LoadFromDisk(&db, fileName, NULL, 0);
+    if(result != kStatus_Success) {
+        SCREEN_PrintError("Error loading database\n");
+        return NULL;
+    }
+
+    return db;
 }
 
 status_t GUI_SaveDatabase(database_t *db) {
@@ -655,7 +670,8 @@ void GUI_Main() {
         int selection = GUI_GetOptionSelection(1, 8, "Please select an option (1-7): ");
 
         switch(selection) {
-            case 1: /* Load DB from file */
+            case 1:
+                db = GUI_LoadDatabase();
                 break;
             case 2: /* Create default E-DB */
                 db = GUI_CreateDefaultDatabase();

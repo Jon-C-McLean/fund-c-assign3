@@ -12,6 +12,7 @@
 #define SCHEMA_GROUP_ID 1U
 #define OPS_GROUP_ID 3U
 #define BP_GROUP_ID 4U
+#define IO_GROUP_ID 5U
 
 typedef enum {
     kStatus_Success = MAKE_STATUS_CODE(COMMON_GROUP_ID, 0),
@@ -23,6 +24,12 @@ typedef enum {
     kStatus_Schema_UnknownTableId = MAKE_STATUS_CODE(SCHEMA_GROUP_ID, 1),
     kStatus_Schema_UnknownColumn = MAKE_STATUS_CODE(SCHEMA_GROUP_ID, 2),
     kStatus_Schema_NoTableWithName = MAKE_STATUS_CODE(SCHEMA_GROUP_ID, 3),
+
+    kStatus_IO_UnknownError = MAKE_STATUS_CODE(IO_GROUP_ID, 0),
+    kStatus_IO_FileNotFound = MAKE_STATUS_CODE(IO_GROUP_ID, 1),
+    kStatus_IO_BadMagicNumber = MAKE_STATUS_CODE(IO_GROUP_ID, 2),
+    kStatus_IO_MissingKey = MAKE_STATUS_CODE(IO_GROUP_ID, 3),
+    kStatus_IO_BadKey = MAKE_STATUS_CODE(IO_GROUP_ID, 4),
 } status_t;
 
 #endif

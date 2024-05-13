@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 const unsigned char MAGIC[] = {0x6A, 0x6F, 0x6E, 0x20, 0x64, 0x62, 0x0A};
+const unsigned char ENC_CHECK_MAGIC[] = {'D', 'B', 'E', 'N', 'C'};
 
 status_t DB_CreateDefaultDatabase(database_t **db) {
     database_schema_t *schema;
@@ -125,7 +126,7 @@ status_t DB_InsertRow(database_t *db, int tableId, void *values) {
         db->tables[tableId].data = (char *)malloc(db->tables[tableId].rowSize);
     } else {
         db->tables[tableId].data = (char *)realloc(db->tables[tableId].data, 
-            db->tables[tableId].rows * db->tables[tableId].rowSize);
+            (db->tables[tableId].rows+1) * db->tables[tableId].rowSize);
     }
 
     if(db->tables[tableId].data == NULL) return kStatus_AllocError;
@@ -235,6 +236,7 @@ status_t DB_BuildBinaryData(database_t *db, char **data, int *size) {
     if(binarized == NULL) return kStatus_AllocError;
 
     *data = binarized;
+    *size = calcSize;
     int offset = 0;
     
     memcpy(binarized + offset, &db->schema->numTables, sizeof(db->schema->numTables));
@@ -257,6 +259,9 @@ status_t DB_BuildBinaryData(database_t *db, char **data, int *size) {
 
         memcpy(binarized + offset, &db->tables[i].rows, sizeof(db->tables[i].rows));
         offset += sizeof(db->tables[i].rows);
+
+        memcpy(binarized + offset, &db->tables[i].rowSize, sizeof(db->tables[i].rowSize));
+        offset += sizeof(db->tables[i].rowSize);
 
         for(j = 0; j < table->numColumns; j++) {
             memcpy(binarized + offset, &(table->columns[j]), sizeof(table_col_def_t));
@@ -282,19 +287,24 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
 
     char *binaryData;
     int binarySize;
-
     status_t result = DB_BuildBinaryData(db, &binaryData, &binarySize);
-
     int originalSize = binarySize;
-    if(binarySize % 16 != 0) { /* Pad data to be multiple of 16 */
-        binarySize += 16 - (binarySize % 16);
-        binaryData = (char *)realloc(binaryData, binarySize);
-    }
 
     if(result != kStatus_Success) {
         (void)fclose(file);
         if(binaryData != NULL) free(binaryData);
         return result;
+    }
+
+    /* Reallocate and append encryption magic at end */
+    binarySize += sizeof(ENC_CHECK_MAGIC);
+    binaryData = (char *)realloc(binaryData, binarySize);
+    (void)memcpy(binaryData + binarySize - sizeof(ENC_CHECK_MAGIC), ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC));
+
+    /* Pad data to be multiple of 16 bytes */
+    if(binarySize % 16 != 0) {
+        binarySize += 16 - (binarySize % 16);
+        binaryData = (char *)realloc(binaryData, binarySize);
     }
 
     aes_context_t context;
@@ -312,6 +322,141 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
     (void)fwrite(binaryData, binarySize, 1, file);
     (void)fclose(file);
 
+    free(binaryData);
+
+
+    return kStatus_Success;
+}
+
+status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize) {
+    if(db == NULL || filename == NULL) return kStatus_InvalidArgument;
+
+    FILE *file = fopen(filename, "rb");
+    if(file == NULL) return kStatus_Fail;
+
+    unsigned char magic[7];
+    (void)fread(magic, sizeof(magic), 1, file);
+
+    if(memcmp(magic, MAGIC, sizeof(MAGIC)) != 0) {
+        /* Likely corrupted or not a valid DB */
+        (void)fclose(file);
+        return kStatus_IO_BadMagicNumber;
+    }
+
+    int originalSize;
+    unsigned char iv[16];
+    (void)fread(&originalSize, sizeof(originalSize), 1, file);
+    (void)fread(iv, sizeof(iv), 1, file);
+
+    (void)fseek(file, 0, SEEK_END);
+    int dataSize = ftell(file) - sizeof(originalSize) - sizeof(iv) - sizeof(MAGIC);
+    (void)fseek(file, sizeof(MAGIC) + sizeof(originalSize) + sizeof(iv), SEEK_SET);
+
+    char *binaryData = (char *)malloc(dataSize);
+    if(binaryData == NULL) {
+        (void)fclose(file);
+        return kStatus_AllocError;
+    }
+
+    (void)fread(binaryData, dataSize, 1, file);
+
+    int isEncrypted = 0;
+
+    printf("Original size: %d\n", originalSize);
+
+    if(memcmp(binaryData + originalSize, ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC)) != 0) {
+        printf("%s\n", binaryData + originalSize);
+        printf("File is encrypted\n");
+        isEncrypted = 1;
+    }
+
+    if(key == NULL && isEncrypted) {
+        (void)fclose(file);
+        free(binaryData);
+        return kStatus_IO_MissingKey;
+    }
+
+    if(isEncrypted) {
+        if(key == NULL) {
+            (void)fclose(file);
+            free(binaryData);
+            return kStatus_Fail;
+        }
+        aes_context_t context;
+        AES_InitContext(&context, (unsigned char *)key, iv);
+        AES_Decrypt(&context, (unsigned char *)binaryData, originalSize);
+
+        /* Check if decryption was successful */
+        if(memcmp(binaryData + originalSize, ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC)) != 0) {
+            (void)fclose(file);
+            free(binaryData);
+            return kStatus_IO_BadKey;
+        }
+    }
+
+    int offset = 0;
+    int numTables;
+    char dbName[MAX_DB_NAME_SIZE];
+    int i, j;
+
+    *db = (database_t *)malloc(sizeof(database_t));
+
+    memcpy(&numTables, binaryData + offset, sizeof(numTables));
+    offset += sizeof(numTables);
+    memcpy(dbName, binaryData + offset, sizeof(dbName));
+    offset += sizeof(dbName);
+
+    SCHEMA_CreateDatabaseSchema(&((*db)->schema), dbName);
+
+    (*db)->tables = (table_t *)malloc(sizeof(table_t) * numTables);
+    (*db)->schema->tables = (table_schema_def_t *)malloc(sizeof(table_schema_def_t) * numTables);
+    (*db)->schema->numTables = numTables;
+    strncpy((*db)->schema->dbName, dbName, sizeof(dbName));
+
+    for(i = 0; i < numTables; i++) {
+        table_schema_def_t *table = &((*db)->schema->tables[i]);
+        table_t *tableData = &((*db)->tables[i]);
+        if(table == NULL) {
+            (void)fclose(file);
+            free(binaryData);
+            (void)SCHEMA_DestroyDatabaseSchema((*db)->schema);
+            free(*db);
+            return kStatus_AllocError;
+        }
+
+        memcpy(table->tableName, binaryData + offset, sizeof(table->tableName));
+        offset += sizeof(table->tableName);
+
+        memcpy(&table->tableId, binaryData + offset, sizeof(table->tableId));
+        offset += sizeof(table->tableId);
+
+        memcpy(&table->numColumns, binaryData + offset, sizeof(table->numColumns));
+        offset += sizeof(table->numColumns);
+
+        memcpy(&tableData->rows, binaryData + offset, sizeof(tableData->rows));
+        offset += sizeof(tableData->rows);
+
+        memcpy(&tableData->rowSize, binaryData + offset, sizeof(tableData->rowSize));
+        offset += sizeof(tableData->rowSize);
+
+        table->columns = (table_col_def_t *)malloc(sizeof(table_col_def_t) * table->numColumns);
+
+        for(j = 0; j < table->numColumns; j++) {
+            memcpy(&(table->columns[j]), binaryData + offset, sizeof(table_col_def_t));
+            offset += sizeof(table_col_def_t);
+        }
+
+        tableData->tableId = table->tableId;
+        tableData->data = (char *)malloc(tableData->rows * tableData->rowSize);
+
+        for(j = 0; j < tableData->rows; j++) {
+            memcpy(tableData->data + (j * tableData->rowSize), binaryData + offset, tableData->rowSize);
+            offset += tableData->rowSize;
+        }
+    }
+
+    (void)free(binaryData);
+    (void)fclose(file);
 
     return kStatus_Success;
 }

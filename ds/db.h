@@ -132,7 +132,7 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
  * @param[in] keySize The size of the key (only supports 128 bit).
  * @return status_t Status of the operation
  */
-status_t DB_LoadFromDisk(database_t *db, char *filename, char *key, int keySize);
+status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize);
 
 status_t DB_FindRowWithKey(database_t *db, int tableId, int key, int *index);
 

@@ -47,6 +47,16 @@ typedef struct {
 } database_schema_t;
 
 /**
+ * @brief Initializes a database schema with the given name
+ * @author Jon McLean (13515869)
+ * 
+ * @param[inout] schema Reference to the database schema to initialize
+ * @param[in] dbName Name of the database
+ * @return status_t Status of the operation
+ */
+status_t SCHEMA_CreateDatabaseSchema(database_schema_t **schema, char *dbName);
+
+/**
  * @brief Initializes a database schema with the default options
  * @author Jon McLean (13515869)
  * 

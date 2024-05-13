@@ -5,9 +5,7 @@
 
 #include "schema.h"
 
-status_t SCHEMA_CreateDefaultDatabaseSchema(database_schema_t **schema) {
-    char tableName[MAX_TABLE_NAME_SIZE] = "Employee";
-
+status_t SCHEMA_CreateDatabaseSchema(database_schema_t **schema, char *dbName) {
     if(schema == NULL) {
         return kStatus_InvalidArgument;
     }
@@ -17,8 +15,22 @@ status_t SCHEMA_CreateDefaultDatabaseSchema(database_schema_t **schema) {
         return kStatus_AllocError;
     }
 
-    (*schema)->numTables = 0;
     memset((*schema)->dbName, 0, MAX_DB_NAME_SIZE);
+    if(dbName != NULL) {
+        strncpy((*schema)->dbName, dbName, MAX_DB_NAME_SIZE);
+    }
+    (*schema)->numTables = 0;
+    (*schema)->tables = NULL;
+
+    return kStatus_Success;
+
+}
+
+status_t SCHEMA_CreateDefaultDatabaseSchema(database_schema_t **schema) {
+    char tableName[MAX_TABLE_NAME_SIZE] = "Employee";
+
+    status_t result = SCHEMA_CreateDatabaseSchema(schema, NULL);
+    if(result != kStatus_Success) return result;
     
     table_col_def_t *employeeColumns = malloc(sizeof(table_col_def_t) * 3);
     memset(employeeColumns, 0, sizeof(table_col_def_t) * 3);
