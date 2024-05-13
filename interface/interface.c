@@ -28,7 +28,7 @@ void GUI_PrintMainMenu() {
     printf("4. Schema Management\n");
     printf("5. View Data/Tables\n");
     printf("6. Perform Query\n");
-    printf("7. Save Database\n");
+    printf("7. Save Database and Exit \n");
     printf("8. Exit\n");
 }
 
@@ -76,7 +76,6 @@ database_t* GUI_LoadDatabase(void) {
     status_t result = DB_LoadFromDisk(&db, fileName, selection == 1 ? key : NULL, sizeof(key));
     if(result != kStatus_Success) {
         SCREEN_PrintError("Error loading database\n");
-        printf("Error: %d\n", result);
         return NULL;
     }
 
@@ -684,17 +683,26 @@ void GUI_Main() {
     database_t *db = NULL;
 
     while(1) {
-        int selection = GUI_GetOptionSelection(1, 8, "Please select an option (1-7): ");
+        int selection = GUI_GetOptionSelection(1, 8, "Please select an option (1-8): ");
 
         switch(selection) {
             case 1:
                 db = GUI_LoadDatabase();
+                
+                if(db != NULL) {
+                    SCREEN_ClearScreen();
+                    SCREEN_Print("Loaded database successfully\n", kColor_Green);
+                }
+
+                GUI_PrintMainMenu();
                 break;
             case 2: /* Create default E-DB */
                 db = GUI_CreateDefaultDatabase();
                 if(db == NULL) {
-                    printf("FATAL: Database creation failed...\n");
-                    exit(-1);
+                    SCREEN_PrintError("Error creating default database\n");
+                }else {
+                    SCREEN_ClearScreen();
+                    SCREEN_Print("Created database successfully\n", kColor_Green);
                 }
                 GUI_PrintMainMenu(); /* Print menu again as screen was cleared */
                 break;
@@ -717,6 +725,9 @@ void GUI_Main() {
             case 7:
                 if(GUI_SaveDatabase(db) == kStatus_Success) {
                     SCREEN_ClearScreen();
+                    SCREEN_Print("Saved database successfully\n", kColor_Green);
+                    printf("Exiting...\n");
+                    exit(0);
                 }
 
                 GUI_PrintMainMenu();
