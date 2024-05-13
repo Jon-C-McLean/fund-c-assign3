@@ -9,9 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define AES_BLOCK_SIZE 16U
-#define AES_KEY_SIZE 128U /* 128 bit key size (16 bytes) */
-#define AES_EXP_KEY_SIZE 176U /* 176 bytes for expanded key */
+#define AES_BLOCK_SIZE 16
+#define AES_KEY_SIZE 16 /* 128 bit key size (16 bytes) */
+#define AES_EXP_KEY_SIZE 176 /* 176 bytes for expanded key */
 
 typedef struct {
     unsigned char roundKey[AES_EXP_KEY_SIZE]; /* AES Round Key */

@@ -56,11 +56,27 @@ database_t* GUI_LoadDatabase(void) {
     char fileName[256];
     INPUT_GetString(fileName, 256);
 
-    /* TODO: Enc and compression */
+    printf("Please select whether this database is encrypted\n");
+    printf("1. Encrypted\n");
+    printf("2. Plain\n");
 
-    status_t result = DB_LoadFromDisk(&db, fileName, NULL, 0);
+    int selection = GUI_GetOptionSelection(1, 2, "Please select an option (1-2): ");
+    if(selection == -1) {
+        SCREEN_PrintError("An internal error has occured, please try agian\n");
+        return NULL;
+    }
+
+    char key[AES_KEY_SIZE / 8];
+    memset(key, 0, sizeof(key));
+    if(selection == 1) {
+        printf("Enter the key to use for decryption (%d bytes): \n> ", AES_KEY_SIZE / 8);
+        INPUT_GetString(key, AES_KEY_SIZE / 8);
+    }
+
+    status_t result = DB_LoadFromDisk(&db, fileName, selection == 1 ? key : NULL, sizeof(key));
     if(result != kStatus_Success) {
         SCREEN_PrintError("Error loading database\n");
+        printf("Error: %d\n", result);
         return NULL;
     }
 
@@ -93,6 +109,7 @@ status_t GUI_SaveDatabase(database_t *db) {
     int encrypt = selection != 3 ? 1 : 0;
 
     char key[AES_KEY_SIZE / 8];
+    memset(key, 0, sizeof(key));
     if(encrypt) {
         printf("Enter the key to use for encryption (%d bytes): \n> ", AES_KEY_SIZE / 8);
         INPUT_GetString(key, AES_KEY_SIZE / 8);
