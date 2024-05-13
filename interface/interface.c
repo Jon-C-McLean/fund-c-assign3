@@ -223,8 +223,8 @@ void GUI_PrintDataOperationsMenu(database_t *db) {
     printf("2. Display Table\n");
     printf("3. Create Record\n");
     printf("4. Update Record\n");
-    printf("5. Delete Record\n");
-    printf("6. Find Record(s)\n");
+    printf("5. Delete Record\n"); /* TODO */
+    printf("6. Find Record(s)\n"); /* TODO */
     printf("7. Return to Main Menu\n");
 }
 
@@ -575,10 +575,10 @@ void GUI_SchemaOperationsLoop(database_t *db) {
 }
 
 void GUI_PrintSchemaOperationsMenu() {
-    printf("1. Create Table\n");
-    printf("2. Delete Table\n");
+    printf("1. Create Table\n"); /* TODO */
+    printf("2. Delete Table\n"); /* TODO */
     printf("3. Add Column\n");
-    printf("4. Delete Column\n");
+    printf("4. Delete Column\n"); /* TODO */
     printf("5. Display Table Schema\n");
     printf("6. Return to Main Menu\n");
 }
