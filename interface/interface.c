@@ -178,29 +178,22 @@ void GUI_DataOperationsLoop(database_t *db) {
                 break;
             case 3:
                 if((status = GUI_CreateRecordForTable(db)) != kStatus_Success) {
-                    SCREEN_PrintError("An error occured creating \
-                        the record, please try again\n");
                 } else {
                     SCREEN_ClearScreen();
-                    printf("Data Operations\n");
-                    printf("===============\n");
-                    GUI_PrintDataOperationsMenu(db);
                 }
+                printf("Data Operations\n");
+                printf("===============\n");
+                GUI_PrintDataOperationsMenu(db);
                 break;
             case 4:
                 if((status = GUI_UpdateRecordForTable(db)) != kStatus_Success && status != kStatus_Fail) {
-                    SCREEN_PrintError("An error occured updating \
-                        the record, please try again\n");
                 } else if (status == kStatus_Success) {
                     SCREEN_ClearScreen();
-                    printf("Data Operations\n");
-                    printf("===============\n");
-                    GUI_PrintDataOperationsMenu(db);
-                } else {
-                    printf("Data Operations\n");
-                    printf("===============\n");
-                    GUI_PrintDataOperationsMenu(db);
                 }
+
+                printf("Data Operations\n");
+                printf("===============\n");
+                GUI_PrintDataOperationsMenu(db);
                 break;
             case 5:
                 if((status = GUI_RemoveRowForTable(db)) != kStatus_Success) {
@@ -344,12 +337,17 @@ status_t GUI_CreateRecordForTable(database_t *db) {
 
     int tableId = -1;
     status_t result = SCHEMA_GetTableIdForName(db->schema, tableName, &tableId);
-    if(result != kStatus_Success) return result;
-    if(tableId == -1) return kStatus_Schema_UnknownTableId;
+    if(result != kStatus_Success || tableId == -1) {
+        SCREEN_PrintError("Unable to find the specified table\n");
+        return kStatus_Fail;
+    }
 
     table_schema_def_t *table = NULL;
     result = SCHEMA_GetTableForId(db->schema, tableId, &table);
-    if(result != kStatus_Success) return result;
+    if(result != kStatus_Success)  {
+        SCREEN_PrintError("Unable to find the specified table\n");
+        return result;
+    };
 
     /* Create Record */
     char data[db->tables[tableId].rowSize];
@@ -362,12 +360,23 @@ status_t GUI_CreateRecordForTable(database_t *db) {
             case INT:
                 INPUT_GetInteger((int *)(data+offset));
                 offset += sizeof(int);
+
+                if(table->columns[i].isPrimaryKey) {
+                    int index = 0;
+                    result = DB_FindRowWithKey(db, tableId, *((int *)(data+offset-sizeof(int))), &index);
+                    if(result == kStatus_Success) {
+                        SCREEN_PrintError("Primary key already exists\n");
+                        return kStatus_Fail;
+                    }
+                }
                 break;
             case STRING:
                 INPUT_GetString(data+offset, table->columns[i].size);
                 offset += table->columns[i].size;
                 break;
             default:
+                SCREEN_PrintError("Unknown column type. "
+                    "Your database is likely corrupted\n");
                 return kStatus_Schema_UnknownError;
         }
     }
@@ -389,8 +398,10 @@ status_t GUI_UpdateRecordForTable(database_t *db) {
 
     int tableId = -1;
     status_t result = SCHEMA_GetTableIdForName(db->schema, tableName, &tableId);
-    if(result != kStatus_Success) return result;
-    if(tableId == -1) return kStatus_Schema_UnknownTableId;
+    if(result != kStatus_Success || tableId == -1) {
+        SCREEN_PrintError("Unable to find the specified table\n");
+        return kStatus_Fail;
+    }
 
     (void)GUI_DisplayTable(db, tableName, 0);
     
@@ -405,11 +416,10 @@ status_t GUI_UpdateRecordForTable(database_t *db) {
         }
 
         result = DB_FindRowWithKey(db, tableId, primaryKey, &index);
-
-
         if(result == kStatus_Fail || index == -1) {
             printf("Unknown row ID\n");
         }else if (result != kStatus_Success) {
+            SCREEN_PrintError("An error occured finding the row\n");
             return result;
         }else {
             break;
@@ -436,6 +446,8 @@ status_t GUI_UpdateRecordForTable(database_t *db) {
                 offset += table->columns[i].size;
                 break;
             default:
+                SCREEN_PrintError("Unknown column type. "
+                    "Your database is likely corrupted\n");
                 return kStatus_Schema_UnknownError;
         }
     }
