@@ -75,6 +75,15 @@ static const u8 rcon[11] = { /* x^(i-1) */
 };
 
 /* Private Functions */
+
+/**
+ * @brief Perform the key expansion operations for the AES algorithm with
+ * a 128-bit key (176 byte expanded key)
+ * @author Jon McLean (13515869)
+ * 
+ * @param[inout] roundKey The round key to expand
+ * @param[in] key The user's key
+ */
 void AES_PerformKeyExpansion(u8 *roundKey, const u8 *key) {
     unsigned i, j, k;
     u8 temp[4];
@@ -117,6 +126,14 @@ void AES_PerformKeyExpansion(u8 *roundKey, const u8 *key) {
     }
 }
 
+/**
+ * @brief Add the round key to the state matrix (XOR operation)
+ * @author Jon McLean (13515869)
+ * 
+ * @param[in] round The current round
+ * @param[inout] state The state matrix
+ * @param[in] roundKey The round key to add to the state matrix
+ */
 void AES_AddRoundKey(u8 round, state_t *state, const u8 *roundKey) {
     u8 i, j;
 
@@ -127,6 +144,12 @@ void AES_AddRoundKey(u8 round, state_t *state, const u8 *roundKey) {
     }
 }
 
+/**
+ * @brief Substitute the state matrix with the S-Box values (SubBytes operation)
+ * @author Jon McLean (13515869)
+ * 
+ * @param[inout] state The state matrix to substitute values into
+ */
 void AES_SubBytes(state_t *state) {
     u8 i,j;
     for(i = 0; i < 4; i++) {
@@ -136,6 +159,12 @@ void AES_SubBytes(state_t *state) {
     }
 }
 
+/**
+ * @brief Shift the rows of the state matrix (ShiftRows operation)
+ * @author Jon McLean (13515869)
+ * 
+ * @param[inout] state The state matrix that will have its rows shifted
+ */
 void AES_ShiftRows(state_t *state) {
     u8 temp;
 
@@ -163,6 +192,12 @@ void AES_ShiftRows(state_t *state) {
     (*state)[1][3] = temp;
 }
 
+/**
+ * @brief Mixes the columns of the state matrix (MixColumns operation)
+ * @author Jon McLean (13515869)
+ * 
+ * @param[in] state The state matrix to mix columns in
+ */
 void AES_MixCols(state_t *state) {
     u8 i;
     u8 tmp, tm, t;
@@ -189,6 +224,13 @@ void AES_MixCols(state_t *state) {
     }
 }
 
+/**
+ * @brief Mixes the columns of the state matrix (MixColumns operation) 
+ * in reverse for decryption
+ * @author Jon McLean (13515869)
+ * 
+ * @param[inout] state The state matrix to mix columns in reverse
+ */
 void AES_InverseMixCols(state_t *state) {
     int i;
     u8 a,b,c,d;
@@ -206,6 +248,13 @@ void AES_InverseMixCols(state_t *state) {
     }   
 }
 
+/**
+ * @brief InvSubBytes operation for decryption, this is the inverse of the 
+ * SubBytes operation
+ * @author Jon McLean (13515869)
+ * 
+ * @param[inout] state The state matrix to perform the inverse substitution on
+ */
 void AES_InverseSubBytes(state_t *state) {
     u8 i,j;
     for(i = 0; i < 4; i++) {
@@ -215,6 +264,13 @@ void AES_InverseSubBytes(state_t *state) {
     }
 }
 
+/**
+ * @brief InverseShiftRows operation for decryption, this is the inverse of the
+ * ShiftRows operation.
+ * @author Jon McLean (13515869)
+ * 
+ * @param[inout] state The state matrix to perform the inverse shift rows on
+ */
 void AES_InverseShiftRows(state_t *state) {
     u8 temp;
 
@@ -239,6 +295,20 @@ void AES_InverseShiftRows(state_t *state) {
     (*state)[3][3] = temp;
 }
 
+/**
+ * @brief Encrypt the state matrix through performing:
+ * - AddRoundKey
+ * - SubBytes
+ * - ShiftRows
+ * - MixCols
+ * - AddRoundKey
+ * for each round of the AES algorithm, except for the last round where
+ * MixCols is not performed. This is the main encryption function for AES.
+ * @author Jon McLean (13515869)
+ * 
+ * @param[inout] state The state matrix to encrypt
+ * @param[in] roundKey The round key to use for encryption
+ */
 void AES_Cipher(state_t *state, const u8 *roundKey) {
     u8 round = 0;
 
@@ -256,6 +326,14 @@ void AES_Cipher(state_t *state, const u8 *roundKey) {
     AES_AddRoundKey(AES_NUM_ROUNDS, state, roundKey);
 }
 
+/**
+ * @brief The main AES decryption function, this function decrypts the state
+ * matrix and performs the inverse of the AES cipher function.
+ * @author Jon McLean (13515869)
+ * 
+ * @param[inout] state The state matrix to decrypt
+ * @param[in] roundKey The round key to use for decryption
+ */
 void AES_InverseCipher(state_t *state, const u8 *roundKey) {
     u8 round = 0;
 
@@ -272,6 +350,13 @@ void AES_InverseCipher(state_t *state, const u8 *roundKey) {
     }
 }
 
+/**
+ * @brief XOR the buffer with the initialization vector for AES CBC mode
+ * @author Jon McLean (13515869)
+ * 
+ * @param[inout] buffer The buffer to XOR with the init vector
+ * @param iv 
+ */
 void AES_XorIV(u8* buffer, const u8 *iv) {
     u8 i;
     for(i = 0; i < AES_BLOCK_SIZE; i++) {

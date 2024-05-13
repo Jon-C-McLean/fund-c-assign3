@@ -20,6 +20,7 @@ typedef struct {
 
 /**
  * @brief Initialize the AES context with the key and IV
+ * @author Jon McLean (13515869)
  * 
  * @param[inout] ctx The context to initialize
  * @param[in] key The key to use
@@ -29,13 +30,15 @@ void AES_InitContext(aes_context_t *ctx, unsigned char *key, unsigned char *iv);
 
 /**
  * @brief Encrypt the input using the AES context (i.e. key and IV)
+ * @author Jon McLean (13515869)
  * 
- * @param[inout] ctx 
+ * @param[inout] ctx The context to use
  */
 void AES_Encrypt(aes_context_t *ctx, unsigned char *input, size_t size);
 
 /**
  * @brief Decrypt the input buffer using the AES context (i.e. key and IV)
+ * @author Jon McLean (13515869)
  * 
  * @param[inout] ctx The context to use
  */
