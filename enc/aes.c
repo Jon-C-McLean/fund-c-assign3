@@ -4,7 +4,6 @@
  */
 
 #include "aes.h"
-#include <stdio.h>
 
 #define AES_BOX_SIZE 256U
 
@@ -15,7 +14,7 @@
 typedef unsigned char u8;
 typedef unsigned int u32;
 
-// #define XTIME(x) ((x<<1) ^ (((x>>7) & 1) * 0x1b))
+/* #define XTIME(x) ((x<<1) ^ (((x>>7) & 1) * 0x1b)) */
 
 u8 XTIME(u8 x) {
     return ((x<<1) ^ (((x>>7) & 1) * 0x1b));
@@ -29,10 +28,11 @@ u8 XTIME(u8 x) {
         ((b>>4 & 1) * XTIME(XTIME(XTIME(XTIME(a))))) ) \
 
 #define SBOX(x) (sbox[(x)])
+#define RSBOX(x) (rsbox[(x)])
 
 typedef u8 state_t[4][4];
 
-static const u8 sbox[AES_BOX_SIZE] = {
+const u8 sbox[AES_BOX_SIZE] = {
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
     0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
     0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15,
@@ -51,7 +51,7 @@ static const u8 sbox[AES_BOX_SIZE] = {
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 };
 
-static const u8 rsbox[256] = {
+const u8 rsbox[AES_BOX_SIZE] = {
     0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
     0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb,
     0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e,
@@ -75,11 +75,10 @@ static const u8 rcon[11] = { /* x^(i-1) */
 };
 
 /* Private Functions */
-
-void AES_PerformKeyExpansion(u8 *roundKey, u8 *key) {
-    unsigned int i,j,k;
+void AES_PerformKeyExpansion(u8 *roundKey, const u8 *key) {
+    unsigned i, j, k;
     u8 temp[4];
-
+    
     for(i = 0; i < AES_NUM_WORDS; i++) {
         roundKey[(i * 4) + 0] = key[(i * 4) + 0];
         roundKey[(i * 4) + 1] = key[(i * 4) + 1];
@@ -87,7 +86,7 @@ void AES_PerformKeyExpansion(u8 *roundKey, u8 *key) {
         roundKey[(i * 4) + 3] = key[(i * 4) + 3];
     }
 
-    for(i = AES_NUM_WORDS; i < AES_NUM_COLS + (AES_NUM_ROUNDS + 1); i++) {
+    for(i = AES_NUM_WORDS; i < AES_NUM_COLS * (AES_NUM_ROUNDS + 1); i++) {
         k = (i - 1) * 4;
         temp[0] = roundKey[k + 0];
         temp[1] = roundKey[k + 1];
@@ -95,7 +94,7 @@ void AES_PerformKeyExpansion(u8 *roundKey, u8 *key) {
         temp[3] = roundKey[k + 3];
 
         if(i % AES_NUM_WORDS == 0) {
-            const u8 u = temp[0];
+            u8 u = temp[0];
             temp[0] = temp[1];
             temp[1] = temp[2];
             temp[2] = temp[3];
@@ -109,9 +108,9 @@ void AES_PerformKeyExpansion(u8 *roundKey, u8 *key) {
             temp[0] = temp[0] ^ rcon[i/AES_NUM_WORDS];
         }
 
-        j = i * 4;
+        j = i * 4; 
         k = (i - AES_NUM_WORDS) * 4;
-        roundKey[j] = roundKey[k] ^ temp[0];
+        roundKey[j + 0] = roundKey[k + 0] ^ temp[0];
         roundKey[j + 1] = roundKey[k + 1] ^ temp[1];
         roundKey[j + 2] = roundKey[k + 2] ^ temp[2];
         roundKey[j + 3] = roundKey[k + 3] ^ temp[3];
@@ -182,7 +181,7 @@ void AES_MixCols(state_t *state) {
         
         tm = (*state)[i][2] ^ (*state)[i][3];
         tm = XTIME(tm);
-        (*state)[i][2] ^= tm ^ tmp;
+        (*state)[i][2] ^= tm ^ tmp; // fucks up in this block
 
         tm = (*state)[i][3] ^ t;
         tm = XTIME(tm);
@@ -200,7 +199,7 @@ void AES_InverseMixCols(state_t *state) {
         c = (*state)[i][2];
         d = (*state)[i][3];
 
-        (*state)[i][0] = MULTIPLY(a, 0x0e) ^ MULTIPLY(b, 0x0b) ^ MULTIPLY(c, 0x0a) ^ MULTIPLY(d, 0x09);
+        (*state)[i][0] = MULTIPLY(a, 0x0e) ^ MULTIPLY(b, 0x0b) ^ MULTIPLY(c, 0x0d) ^ MULTIPLY(d, 0x09);
         (*state)[i][1] = MULTIPLY(a, 0x09) ^ MULTIPLY(b, 0x0e) ^ MULTIPLY(c, 0x0b) ^ MULTIPLY(d, 0x0d);
         (*state)[i][2] = MULTIPLY(a, 0x0d) ^ MULTIPLY(b, 0x09) ^ MULTIPLY(c, 0x0e) ^ MULTIPLY(d, 0x0b);
         (*state)[i][3] = MULTIPLY(a, 0x0b) ^ MULTIPLY(b, 0x0d) ^ MULTIPLY(c, 0x09) ^ MULTIPLY(d, 0x0e);
@@ -211,7 +210,7 @@ void AES_InverseSubBytes(state_t *state) {
     u8 i,j;
     for(i = 0; i < 4; i++) {
         for(j = 0; j < 4; j++) {
-            (*state)[j][i] = rsbox[(*state)[j][i]];
+            (*state)[j][i] = RSBOX((*state)[j][i]);
         }
     }
 }
@@ -244,17 +243,6 @@ void AES_Cipher(state_t *state, const u8 *roundKey) {
     u8 round = 0;
 
     AES_AddRoundKey(0, state, roundKey);
-
-    printf("State: \n");
-    int j = 0;
-    int i = 0;
-    for (j = 0; j < 4; j++) {
-        for(i = 0; i < 4; i++) {
-            printf("%02x", (*state)[j][i]);
-        }
-    }
-    printf("\n");
-
     for(round = 1; ; round++) {
         AES_SubBytes(state);
         AES_ShiftRows(state);
@@ -263,16 +251,6 @@ void AES_Cipher(state_t *state, const u8 *roundKey) {
         }
         AES_MixCols(state);
         AES_AddRoundKey(round, state, roundKey);
-        printf("Round %d\n", round);
-        printf("State: \n");
-        int j = 0;
-        int i = 0;
-        for (j = 0; j < 4; j++) {
-            for(i = 0; i < 4; i++) {
-                printf("%02x", (*state)[j][i]);
-            }
-        }
-        printf("\n");
     }
 
     AES_AddRoundKey(AES_NUM_ROUNDS, state, roundKey);
@@ -304,6 +282,7 @@ void AES_XorIV(u8* buffer, const u8 *iv) {
 /* Public Functions */
 void AES_InitContext(aes_context_t *ctx, unsigned char *key, unsigned char *iv) {
     AES_PerformKeyExpansion(ctx->roundKey, key);
+    // KeyExpansion(ctx->roundKey, key);
     memcpy(ctx->iv, iv, AES_BLOCK_SIZE);
 }
 
@@ -316,8 +295,7 @@ void AES_Encrypt(aes_context_t *ctx, unsigned char *input, size_t size) {
         AES_Cipher((state_t *)input, ctx->roundKey);
         iv = input;
         input += AES_BLOCK_SIZE;
-        // Print IV
-    }   
+    }
 
     memcpy(ctx->iv, iv, AES_BLOCK_SIZE);
 }
