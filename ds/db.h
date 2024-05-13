@@ -7,6 +7,7 @@
 #define DB_H_
 
 #include "schema.h"
+#include "../comp/rle.h"
 #include "../enc/aes.h"
 #include "../utils/rand.h"
 

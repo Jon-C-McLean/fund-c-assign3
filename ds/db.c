@@ -61,7 +61,7 @@ status_t DB_DestroyDatabase(database_t *db) {
     for(i = 0; i < db->schema->numTables; i++) {
         if(db->tables[i].data != NULL) free(db->tables[i].data);
     }
-    
+
     SCHEMA_DestroyDatabaseSchema(db->schema);
 
     free(db);
@@ -298,6 +298,17 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
         (void)fclose(file);
         if(binaryData != NULL) free(binaryData);
         return result;
+    }
+
+    /* Compress and realloc */
+    if(compress) {
+        char *compressedData;
+        int compressedSize;
+        RLE_Compress(binaryData, binarySize, &compressedData, &compressedSize);
+
+        free(binaryData);
+        binaryData = compressedData;
+        binarySize = compressedSize;
     }
 
     /* Reallocate and append encryption magic at end */

@@ -94,9 +94,9 @@ status_t GUI_SaveDatabase(database_t *db) {
     INPUT_GetString(fileName, 256);
 
     printf("Please select whether you want compression and encryption\n");
-    printf("1. Encryption \n");
-    printf("2. Encryption and Compression\n");
-    printf("3. None\n");
+    printf("1. Encryption and Compression \n");
+    printf("2. Compression\n");
+    printf("3. None (Plain Text)\n");
 
     int selection = GUI_GetOptionSelection(1, 3, "Please select an option (1-3): ");
     if(selection == -1) {
@@ -104,8 +104,8 @@ status_t GUI_SaveDatabase(database_t *db) {
         return kStatus_Fail;
     }
 
-    int compress = selection == 2 ? 1 : 0;
-    int encrypt = selection != 3 ? 1 : 0;
+    int compress = selection != 3;
+    int encrypt = selection == 1;
 
     char key[AES_KEY_SIZE];
     memset(key, 0, sizeof(key));
