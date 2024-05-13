@@ -4,6 +4,7 @@
  */
 
 #include "rle.h"
+#include <stdio.h>
 
 void RLE_Compress(char *input, int dataSize, char **output, int *length) {
     char *outputBuffer = (char *)malloc(dataSize * 2); /* Worst case sizing */

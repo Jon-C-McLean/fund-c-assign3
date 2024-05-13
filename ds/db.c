@@ -9,6 +9,9 @@
 const unsigned char MAGIC[] = {0x6A, 0x6F, 0x6E, 0x20, 0x64, 0x62, 0x0A};
 const unsigned char ENC_CHECK_MAGIC[] = {'D', 'B', 'E', 'N', 'C'};
 
+const unsigned char COMP_MAGIC[] = {'R', 'L', 'E'};
+const unsigned char NORM_MAGIC[] = {'N', 'O', 'R'};
+
 status_t DB_CreateDefaultDatabase(database_t **db) {
     database_schema_t *schema;
     status_t result;
@@ -300,17 +303,6 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
         return result;
     }
 
-    /* Compress and realloc */
-    if(compress) {
-        char *compressedData;
-        int compressedSize;
-        RLE_Compress(binaryData, binarySize, &compressedData, &compressedSize);
-
-        free(binaryData);
-        binaryData = compressedData;
-        binarySize = compressedSize;
-    }
-
     /* Reallocate and append encryption magic at end */
     binarySize += sizeof(ENC_CHECK_MAGIC);
     binaryData = (char *)realloc(binaryData, binarySize);
@@ -320,6 +312,21 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
     if(binarySize % 16 != 0) {
         binarySize += 16 - (binarySize % 16);
         binaryData = (char *)realloc(binaryData, binarySize);
+    }
+
+    /* Compress and realloc */
+    if(compress) {
+        char *compressedData;
+        int compressedSize;
+        RLE_Compress(binaryData, binarySize, &compressedData, &compressedSize);
+
+        free(binaryData);
+        binaryData = compressedData;
+        binarySize = compressedSize;
+
+        (void)fwrite(COMP_MAGIC, sizeof(COMP_MAGIC), 1, file);
+    } else {
+        (void)fwrite(NORM_MAGIC, sizeof(NORM_MAGIC), 1, file);
     }
 
     aes_context_t context;
@@ -358,6 +365,14 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
         return kStatus_IO_BadMagicNumber;
     }
 
+    char compStatus[sizeof(COMP_MAGIC)];
+    (void)fread(compStatus, sizeof(compStatus), 1, file);
+
+    int isCompressed = 0;
+    if(memcmp(compStatus, COMP_MAGIC, sizeof(COMP_MAGIC)) == 0) {
+        isCompressed = 1;
+    }
+
     int originalSize;
     unsigned char iv[16];
     (void)fread(&originalSize, sizeof(originalSize), 1, file);
@@ -370,20 +385,37 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
     char *binaryData = (char *)malloc(dataSize);
     if(binaryData == NULL) {
         (void)fclose(file);
+        printf("Cuck 4\n");
         return kStatus_AllocError;
     }
 
     (void)fread(binaryData, dataSize, 1, file);
 
-    int isEncrypted = 0;
+    if(isCompressed) {
+        /* Decompress using RLE */
+        char *decompressedData;
+        int decompressedSize;
+        RLE_Compress(binaryData, dataSize - sizeof(originalSize) - sizeof(iv) - sizeof(MAGIC), &decompressedData, &decompressedSize);
 
+        free(binaryData);
+        binaryData = decompressedData;
+        dataSize = decompressedSize;
+    }
+
+    int isEncrypted = 0;
+    
     if(memcmp(binaryData + originalSize, ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC)) != 0) {
         isEncrypted = 1;
     }
 
+    FILE* debugFile = fopen("debug.data", "wb");
+    (void)fwrite(binaryData, dataSize, 1, debugFile);
+    (void)fclose(debugFile);
+
     if(key == NULL && isEncrypted) {
         (void)fclose(file);
         free(binaryData);
+        printf("Cuck\n");
         return kStatus_IO_MissingKey;
     }
 
@@ -391,6 +423,7 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
         if(key == NULL) {
             (void)fclose(file);
             free(binaryData);
+            printf("Cuck 2\n");
             return kStatus_Fail;
         }
         aes_context_t context;
@@ -402,6 +435,7 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
         if(memcmp(binaryData + originalSize, ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC)) != 0) {
             (void)fclose(file);
             free(binaryData);
+            printf("Cuck 3\n");
             return kStatus_IO_BadKey;
         }
     }
