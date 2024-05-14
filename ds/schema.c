@@ -174,3 +174,19 @@ status_t SCHEMA_AddColumn(database_schema_t *schema, int tableId, char *name, co
 
     return kStatus_Success;
 }
+
+status_t SCHEMA_GetColumnForName(table_schema_def_t *table, char *name, table_col_def_t **column) {
+    int i = 0;
+    if(table == NULL || name == NULL || column == NULL) {
+        return kStatus_InvalidArgument;
+    }
+
+    for(i = 0; i < table->numColumns; i++) {
+        if(strcmp(table->columns[i].columnName, name) == 0) {
+            *column = &table->columns[i];
+            return kStatus_Success;
+        }
+    }
+
+    return kStatus_Schema_UnknownColumn;
+}
