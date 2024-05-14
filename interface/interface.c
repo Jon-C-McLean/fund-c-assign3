@@ -556,11 +556,23 @@ void GUI_SchemaOperationsLoop(database_t *db) {
                     printf("Error adding column %d\n", status);
                 } else {
                     SCREEN_ClearScreen();
-                    printf("Schema Operations\n");
-                    printf("================\n");
-                    GUI_PrintSchemaOperationsMenu();
                 }
+
+                printf("Schema Operations\n");
+                printf("================\n");
+                GUI_PrintSchemaOperationsMenu();
                 break;
+            case 5:
+                status = GUI_DisplayTableSchema(db, -1);
+                if(status != kStatus_Success) {
+                    printf("Error displaying table schema %d\n", status);
+                } else {
+                    SCREEN_ClearScreen();
+                }
+
+                printf("Schema Operations\n");
+                printf("================\n");
+                GUI_PrintSchemaOperationsMenu();
             case -1:
                 printf("FATAL: Internal error occured\n");
                 return;
@@ -692,7 +704,53 @@ status_t GUI_AddColumn(database_t *db) {
 }
 
 status_t GUI_DeleteColumn(database_t *db) { return 0; }
-status_t GUI_DisplayTableSchema(database_t *db) { return 0; }
+
+status_t GUI_DisplayTableSchema(database_t *db, int tableId) {
+    if(db == NULL) return kStatus_InvalidArgument;
+    status_t result;
+    SCREEN_ClearScreen();
+
+    if(tableId == -1) {
+        char tableName[MAX_TABLE_NAME_SIZE];
+        while(1) {
+            printf("Enter the name of the table you wish to display records for: \n> ");
+            int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
+
+            if (length > 0) break;
+        }
+
+        result = SCHEMA_GetTableIdForName(db->schema, tableName, &tableId);
+        if(result != kStatus_Success) return result;
+        if(tableId == -1) return kStatus_Schema_UnknownTableId;
+    }
+
+    table_schema_def_t *table = NULL;
+    result = SCHEMA_GetTableForId(db->schema, tableId, &table);
+    if(result != kStatus_Success) return result;
+
+    SCREEN_ClearScreen();
+    printf("Table Name: %s\n", table->tableName);
+    printf("Table ID: %d\n", tableId);
+    printf("\n\n");
+
+    printf(" Column Num | %-*s |\n", MAX_TABLE_NAME_SIZE, "Column Name");
+
+    char lineBuffer[MAX_COLUMN_NAME_SIZE+1] = {'\0'};
+    memset(lineBuffer, '-', MAX_COLUMN_NAME_SIZE);
+    printf("------------|-%s-|\n", lineBuffer);
+    
+    int i = 0;
+    for(i = 0; i < table->numColumns; i++) {
+        printf("%10d | %-*s |\n", i, MAX_COLUMN_NAME_SIZE, table->columns[i].columnName);
+        printf("------------|-%s-|\n", lineBuffer);
+    }
+
+    if(tableId == -1) {
+        INPUT_WaitForAnyKey("\n\nPress any key to return to menu");
+    }
+
+    return kStatus_Success;
+}
 
 /* Main (App Loop) */
 void GUI_Main() {

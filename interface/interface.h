@@ -219,7 +219,7 @@ status_t GUI_DeleteColumn(database_t *db);
  * @param[in] db The database to display the table schema from.
  * @return status_t Status of the operation
  */
-status_t GUI_DisplayTableSchema(database_t *db);
+status_t GUI_DisplayTableSchema(database_t *db, int tableId);
 
 /* Main (App Loop) */
 /**
