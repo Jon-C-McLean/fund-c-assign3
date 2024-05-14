@@ -26,10 +26,8 @@ void GUI_PrintMainMenu() {
     printf("2. Create Database\n");
     printf("3. Data Operations\n");
     printf("4. Schema Management\n");
-    printf("5. View Data/Tables\n");
-    printf("6. Perform Query\n");
-    printf("7. Save Database and Exit \n");
-    printf("8. Exit\n");
+    printf("5. Save Database and Exit \n");
+    printf("6. Exit\n");
 }
 
 int GUI_GetOptionSelection(int min, int max, char* prompt) {
@@ -705,7 +703,7 @@ void GUI_Main() {
     database_t *db = NULL;
 
     while(1) {
-        int selection = GUI_GetOptionSelection(1, 8, "Please select an option (1-8): ");
+        int selection = GUI_GetOptionSelection(1, 6, "Please select an option (1-6): ");
 
         switch(selection) {
             case 1:
