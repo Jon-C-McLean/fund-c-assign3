@@ -303,17 +303,6 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
         return result;
     }
 
-    /* Reallocate and append encryption magic at end */
-    binarySize += sizeof(ENC_CHECK_MAGIC);
-    binaryData = (char *)realloc(binaryData, binarySize);
-    (void)memcpy(binaryData + binarySize - sizeof(ENC_CHECK_MAGIC), ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC));
-
-    /* Pad data to be multiple of 16 bytes */
-    if(binarySize % 16 != 0) {
-        binarySize += 16 - (binarySize % 16);
-        binaryData = (char *)realloc(binaryData, binarySize);
-    }
-
     /* Compress and realloc */
     if(compress) {
         char *compressedData;
@@ -329,6 +318,19 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
         (void)fwrite(NORM_MAGIC, sizeof(NORM_MAGIC), 1, file);
     }
 
+    /* Reallocate and append encryption magic at end */
+    binarySize += sizeof(ENC_CHECK_MAGIC);
+    binaryData = (char *)realloc(binaryData, binarySize);
+    (void)memcpy(binaryData + binarySize - sizeof(ENC_CHECK_MAGIC), ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC));
+
+    /* Pad data to be multiple of 16 bytes */
+    int paddingBytes = 0;
+    if(binarySize % 16 != 0) {
+        paddingBytes = 16 - (binarySize % 16);
+        binarySize += paddingBytes;
+        binaryData = (char *)realloc(binaryData, binarySize);
+    }
+
     aes_context_t context;
     unsigned char iv[16] = {0};
     if(key != NULL) {
@@ -339,7 +341,10 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
     }
 
     /* Do compression and encryption here */
-    fwrite(&originalSize, sizeof(originalSize), 1, file); /* Save actual size */
+    int actualSize = binarySize - paddingBytes;
+    fwrite(&paddingBytes, sizeof(paddingBytes), 1, file); /* Save padding bytes */
+    fwrite(&actualSize, sizeof(binarySize), 1, file); /* Save actual size */
+    fwrite(&originalSize, sizeof(originalSize), 1, file); /* Save original data size */
     fwrite(iv, sizeof(iv), 1, file); /* Save IV */
     (void)fwrite(binaryData, binarySize, 1, file);
     (void)fclose(file);
@@ -373,63 +378,52 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
         isCompressed = 1;
     }
 
-    int originalSize;
-    unsigned char iv[16];
+    int padding, binarySize, originalSize;
+    (void)fread(&padding, sizeof(padding), 1, file);
+    (void)fread(&binarySize, sizeof(binarySize), 1, file);
     (void)fread(&originalSize, sizeof(originalSize), 1, file);
+
+    unsigned char iv[16];
     (void)fread(iv, sizeof(iv), 1, file);
 
-    (void)fseek(file, 0, SEEK_END);
-    int dataSize = ftell(file) - sizeof(originalSize) - sizeof(iv) - sizeof(MAGIC) - sizeof(COMP_MAGIC);
-    (void)fseek(file, sizeof(MAGIC) + sizeof(originalSize) + sizeof(iv) + sizeof(COMP_MAGIC), SEEK_SET);
+    char *binaryData = (char *)malloc(binarySize);
+    (void)fread(binaryData, binarySize, 1, file);
 
-    char *binaryData = (char *)malloc(dataSize);
-    if(binaryData == NULL) {
-        (void)fclose(file);
-        return kStatus_AllocError;
-    }
+    if(memcmp(binaryData + binarySize - sizeof(ENC_CHECK_MAGIC), ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC)) != 0) {
 
-    (void)fread(binaryData, dataSize, 1, file);
-
-    if(isCompressed) {
-        /* Decompress using RLE */
-        char *decompressedData;
-        int decompressedSize;
-        RLE_Decompress(binaryData, dataSize, &decompressedData, &decompressedSize);
-
-        free(binaryData);
-        binaryData = decompressedData;
-        dataSize = decompressedSize;
-    }
-
-    int isEncrypted = 0;
-    
-    if(memcmp(binaryData + originalSize, ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC)) != 0) {
-        isEncrypted = 1;
-    }
-
-    if(key == NULL && isEncrypted) {
-        (void)fclose(file);
-        free(binaryData);
-        return kStatus_IO_MissingKey;
-    }
-
-    if(isEncrypted) {
         if(key == NULL) {
             (void)fclose(file);
             free(binaryData);
-            return kStatus_Fail;
+            return kStatus_IO_MissingKey;
         }
+
+        if(padding != 0) {
+            (void)realloc(binaryData, binarySize + padding);
+
+            /* Read in padding bytes */
+            (void)fread(binaryData + binarySize, padding, 1, file);
+            binarySize += padding;
+        }
+
         aes_context_t context;
-
         AES_InitContext(&context, (unsigned char *)key, iv);
-        AES_Decrypt(&context, (unsigned char *)binaryData, dataSize);
-
-        /* Check if decryption was successful */
-        if(memcmp(binaryData + originalSize, ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC)) != 0) {
+        AES_Decrypt(&context, (unsigned char *)binaryData, binarySize);
+        
+        if(memcmp(binaryData + (binarySize - sizeof(ENC_CHECK_MAGIC) - padding), ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC)) != 0) {
             (void)fclose(file);
             free(binaryData);
             return kStatus_IO_BadKey;
         }
+    }
+
+    if(isCompressed) {
+        char *decompressedData;
+        int decompressedSize;
+        RLE_Decompress(binaryData, binarySize, &decompressedData, &decompressedSize);
+
+        free(binaryData);
+        binaryData = decompressedData;
+        binarySize = decompressedSize;
     }
 
     int offset = 0;
