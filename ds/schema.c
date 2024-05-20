@@ -87,7 +87,7 @@ status_t SCHEMA_DefineTableStructure(database_schema_t *schema, char *name, tabl
 }
 
 status_t SCHEMA_DestroyTableStructure(database_schema_t *schema, int index) {
-    /*int i = 0;*/
+    int i = 0;
     if(schema == NULL) {
         return kStatus_InvalidArgument;
     }
@@ -96,10 +96,11 @@ status_t SCHEMA_DestroyTableStructure(database_schema_t *schema, int index) {
         return kStatus_InvalidArgument;
     }
 
-    /*if(schema->tables[index] != NULL) {
-        free(schema->tables[index].columns);
+    if(schema->tables + (sizeof(table_schema_def_t) * index) != NULL) {
+        if (schema->tables[index].columns != NULL) {
+            free(schema->tables[index].columns);
+        }
 
-         //Check if any remaining tables exist
         if(schema->numTables == 1) {
             free(schema->tables);
             schema->tables = NULL;
@@ -107,11 +108,12 @@ status_t SCHEMA_DestroyTableStructure(database_schema_t *schema, int index) {
         } else {
             for(i = index; i < schema->numTables - 1; i++) {
                 schema->tables[i] = schema->tables[i + 1];
+                schema->tables[i].tableId = i;
             }
             schema->numTables--;
             schema->tables = (table_schema_def_t *)realloc(schema->tables, sizeof(table_schema_def_t) * schema->numTables);
         }
-    }*/
+    }
 
     return kStatus_Success;
 }

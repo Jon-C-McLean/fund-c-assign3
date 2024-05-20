@@ -41,3 +41,7 @@ void SCREEN_Print(char *text, text_color_t color) {
 void SCREEN_PrintError(char *text) {
     SCREEN_Print(text, kColor_Red);
 }
+
+void SCREEN_PrintInput(char *text) {
+    SCREEN_Print(text, kColor_Blue);
+}

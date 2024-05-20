@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "screen.h"
 
 /**
  * @brief Clears the input buffer of any hanging characters (up to and

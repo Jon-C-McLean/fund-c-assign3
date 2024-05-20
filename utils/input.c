@@ -56,6 +56,6 @@ int INPUT_GetString(char* str, int size) { /* Taken from A2 (Jon McLean) */
 }
 
 void INPUT_WaitForAnyKey(char* prompt) {
-    printf("%s", prompt);
+    SCREEN_PrintInput(prompt);
     getchar();
 }

@@ -33,12 +33,13 @@ void GUI_PrintMainMenu() {
 int GUI_GetOptionSelection(int min, int max, char* prompt) {
     int value = 0;
     while(1) {
-        printf("%s\n", prompt);
+        SCREEN_PrintInput(prompt);
+        printf("\n");
         INPUT_GetInteger(&value);
         if(value >= min && value <= max) {
             return value;
         } else {
-            printf("Invalid selection, please try again.\n");
+            SCREEN_PrintError("Invalid selection, please try again.\n");
         }
     }
 
@@ -50,7 +51,7 @@ database_t* GUI_LoadDatabase(void) {
     
     database_t *db = NULL;
 
-    printf("Enter the name of the file you want to load the DB from: \n> ");
+    SCREEN_PrintInput("Enter the name of the file you want to load the DB from: \n> ");
     char fileName[256];
     INPUT_GetString(fileName, 256);
 
@@ -67,7 +68,7 @@ database_t* GUI_LoadDatabase(void) {
     char key[AES_KEY_SIZE];
     memset(key, 0, sizeof(key));
     if(selection == 1) {
-        printf("Enter the key to use for decryption (%d bytes): \n> ", AES_KEY_SIZE);
+        SCREEN_PrintInput("Enter the key to use for decryption: \n> ");
         INPUT_GetString(key, AES_KEY_SIZE);
     }
 
@@ -87,7 +88,7 @@ status_t GUI_SaveDatabase(database_t *db) {
         return kStatus_Fail;
     }
 
-    printf("Enter the name of the file you want to save the DB to: \n> ");
+    SCREEN_PrintInput("Enter the name of the file you want to save the DB to: \n> ");
     char fileName[256];
     INPUT_GetString(fileName, 256);
 
@@ -108,7 +109,7 @@ status_t GUI_SaveDatabase(database_t *db) {
     char key[AES_KEY_SIZE];
     memset(key, 0, sizeof(key));
     if(encrypt) {
-        printf("Enter the key to use for encryption (%d bytes): \n> ", AES_KEY_SIZE);
+        SCREEN_PrintInput("Enter the key to use for encryption: \n> ");
         INPUT_GetString(key, AES_KEY_SIZE);
     }
 
@@ -134,7 +135,7 @@ database_t* GUI_CreateDefaultDatabase(void) {
     }
 
 
-    printf("Database name: >");
+    SCREEN_PrintInput("Database name: \n>");
     INPUT_GetString(db->schema->dbName, MAX_DB_NAME_SIZE);
 
     printf("Database created successfully\n");
@@ -257,7 +258,7 @@ status_t GUI_DisplayTable(database_t *db, char *tableName, int showPrompt) {
     if(tableName == NULL) {
         char tableName[MAX_TABLE_NAME_SIZE];
         while(1) {
-            printf("Enter the name of the table you wish to display records for: \n> ");
+            SCREEN_PrintInput("Enter the name of the table you wish to display records for: \n> ");
             int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
 
             if (length > 0) break;
@@ -327,7 +328,7 @@ status_t GUI_CreateRecordForTable(database_t *db) {
     /* Get Table Name */
     char tableName[MAX_TABLE_NAME_SIZE];
     while(1) {
-        printf("Enter the name of the table you wish to create a record for: \n> ");
+        SCREEN_PrintInput("Enter the name of the table you wish to create a record for: \n> ");
         int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
 
         if (length > 0) break;
@@ -347,12 +348,8 @@ status_t GUI_CreateRecordForTable(database_t *db) {
         return result;
     };
 
-    printf("Creating record for table %s\n", table->tableName);
-    printf("Table ID: %d\n", tableId);
-
     /* Create Record */
     char data[db->tables[tableId].rowSize];
-    printf("Row size: %d\n", db->tables[tableId].rowSize);
     memset(data, 0, db->tables[tableId].rowSize);
     int offset = 0;
     int i = 0;
@@ -392,7 +389,7 @@ status_t GUI_UpdateRecordForTable(database_t *db) {
 
     char tableName[MAX_TABLE_NAME_SIZE];
     while(1) {
-        printf("Enter the name of the table you wish to create a record for: \n> ");
+        SCREEN_PrintInput("Enter the name of the table you wish to create a record for: \n> ");
         int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
 
         if (length > 0) break;
@@ -409,7 +406,7 @@ status_t GUI_UpdateRecordForTable(database_t *db) {
     
     int index = 0;
     while(1) {
-        printf("\nEnter the primary key of the record you wish to update (-1 to cancel): \n>");
+        SCREEN_PrintInput("\nEnter the primary key of the record you wish to update (-1 to cancel): \n>");
         int primaryKey = 0;
         INPUT_GetInteger(&primaryKey);
 
@@ -419,7 +416,7 @@ status_t GUI_UpdateRecordForTable(database_t *db) {
 
         result = DB_FindRowWithKey(db, tableId, primaryKey, &index);
         if(result == kStatus_Fail || index == -1) {
-            printf("Unknown row ID\n");
+            SCREEN_PrintError("Unknown row ID\n");
         }else if (result != kStatus_Success) {
             SCREEN_PrintError("An error occured finding the row\n");
             return result;
@@ -478,7 +475,7 @@ status_t GUI_RemoveRowForTable(database_t *db) {
 
     char tableName[MAX_TABLE_NAME_SIZE];
     while(1) {
-        printf("Enter the name of the table you wish to delete a record from: \n> ");
+        SCREEN_PrintInput("Enter the name of the table you wish to delete a record from: \n> ");
         int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
 
         if (length > 0) break;
@@ -493,7 +490,7 @@ status_t GUI_RemoveRowForTable(database_t *db) {
 
     int index = 0;
     while(1) {
-        printf("\nEnter the primary key of the record you wish to delete (-1 to cancel): \n>");
+        SCREEN_PrintInput("\nEnter the primary key of the record you wish to delete (-1 to cancel): \n>");
         int primaryKey = 0;
         INPUT_GetInteger(&primaryKey);
 
@@ -505,7 +502,7 @@ status_t GUI_RemoveRowForTable(database_t *db) {
 
 
         if(result == kStatus_Fail || index == -1) {
-            printf("Unknown row ID\n");
+            SCREEN_PrintError("Unknown row ID\n");
         }else if (result != kStatus_Success) {
             return result;
         }else {
@@ -547,15 +544,16 @@ void GUI_SchemaOperationsLoop(database_t *db) {
 
                 break;
             case 2:
-                /*status = GUI_DeleteTable(db);
+                status = GUI_DeleteTable(db);
                 if(status != kStatus_Success) {
                     printf("Error deleting table %d\n", status);
                 } else {
                     SCREEN_ClearScreen();
-                    printf("Schema Operations\n");
-                    printf("================\n");
-                    GUI_PrintSchemaOperationsMenu(db);
-                }*/
+                }
+
+                printf("Schema Operations\n");
+                printf("================\n");
+                GUI_PrintSchemaOperationsMenu(db);
 
                 break;
             case 3:
@@ -608,7 +606,7 @@ status_t GUI_CreateTable(database_t *db) {
     
     char tableName[MAX_TABLE_NAME_SIZE];
     while(1) {
-        printf("Enter the name of the table you wish to create: \n> ");
+        SCREEN_PrintInput("Enter the name of the table you wish to create: \n> ");
         int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
 
         if (length > 0) break;
@@ -616,10 +614,10 @@ status_t GUI_CreateTable(database_t *db) {
 
     int numColumns = 0;
     while(1) {
-        printf("Enter the number of columns you wish to create: \n> ");
+        SCREEN_PrintInput("Enter the number of columns you wish to create: \n> ");
         INPUT_GetInteger(&numColumns);
         if(numColumns > 0) break;
-        printf("Invalid number of columns, this value must be positive.\n");
+        SCREEN_PrintError("Invalid number of columns, this value must be positive.\n");
     }
 
     table_col_def_t *columns = (table_col_def_t *)malloc(sizeof(table_col_def_t) * numColumns);
@@ -641,7 +639,7 @@ status_t GUI_CreateTable(database_t *db) {
             printf("Enter the type of column %d (1: INT, 2: STRING): \n> ", i);
             INPUT_GetInteger(&columnType);
             if(columnType == 1 || columnType == 2) break;
-            printf("Invalid selection, please try again.\n");
+            SCREEN_PrintError("Invalid selection, please try again.\n");
         }
 
         int columnSize = 0;
@@ -674,7 +672,28 @@ status_t GUI_CreateTable(database_t *db) {
     return DB_CreateTable(db, tableName, columns, numColumns);
 }
 
-status_t GUI_DeleteTable(database_t *db) { return 0; }
+status_t GUI_DeleteTable(database_t *db) {
+    if(db == NULL) return kStatus_InvalidArgument;
+
+    SCREEN_ClearScreen();
+    /* Get Table Name */
+    char tableName[MAX_TABLE_NAME_SIZE];
+    while(1) {
+        SCREEN_PrintInput("Enter the name of the table you wish to delete: \n> ");
+        int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
+
+        if (length > 0) break;
+    }
+
+    int tableId = -1;
+    status_t result = SCHEMA_GetTableIdForName(db->schema, tableName, &tableId);
+    if(result != kStatus_Success) {
+        SCREEN_PrintError("Unable to find the specified table\n");
+        return result;
+    }
+
+    return DB_DropTable(db, tableId);
+ }
 
 status_t GUI_AddColumn(database_t *db) {
     if(db == NULL) return kStatus_InvalidArgument;
@@ -686,7 +705,7 @@ status_t GUI_AddColumn(database_t *db) {
     /* Get Table Name */
     char tableName[MAX_TABLE_NAME_SIZE];
     while(1) {
-        printf("Enter the name of the table you wish to add a column to: \n> ");
+        SCREEN_PrintInput("Enter the name of the table you wish to add a column to: \n> ");
         int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
 
         if (length > 0) break;
@@ -704,7 +723,7 @@ status_t GUI_AddColumn(database_t *db) {
     /* Get Column Name */
     char columnName[MAX_COLUMN_NAME_SIZE];
     while(1) {
-        printf("Enter the name of the column you wish to add: \n> ");
+        SCREEN_PrintInput("Enter the name of the column you wish to add: \n> ");
         int length = INPUT_GetString(columnName, MAX_COLUMN_NAME_SIZE);
 
         if (length > 0) break;
@@ -713,16 +732,16 @@ status_t GUI_AddColumn(database_t *db) {
     /* Get Column Type */
     int columnType = 0;
     while(1) {
-        printf("Enter the type of the column you wish to add (1: INT, 2: STRING): \n> ");
+        SCREEN_PrintInput("Enter the type of the column you wish to add (1: INT, 2: STRING): \n> ");
         INPUT_GetInteger(&columnType);
         if(columnType == 1 || columnType == 2) break;
-        printf("Invalid selection, please try again.\n");
+        SCREEN_PrintError("Invalid selection, please try again.\n");
     }
 
     /* Get Column Size */
     int columnSize = 0;
     if(columnType == 2) {
-        printf("Enter the size of the column you wish to add: \n> ");
+        SCREEN_PrintInput("Enter the size of the column you wish to add: \n> ");
         INPUT_GetInteger(&columnSize);
     }
     int columnCount = table->numColumns;
@@ -769,7 +788,6 @@ status_t GUI_AddColumn(database_t *db) {
                     newOffset += table->columns[j].size;
                     break;
                 default:
-                    printf("Fuck me sideways\n");
                     return kStatus_Schema_UnknownColumn;
             }
         }
@@ -792,7 +810,7 @@ status_t GUI_DisplayTableSchema(database_t *db, int tableId) {
     if(tableId == -1) {
         char tableName[MAX_TABLE_NAME_SIZE];
         while(1) {
-            printf("Enter the name of the table you wish to display records for: \n> ");
+            SCREEN_PrintInput("Enter the name of the table you wish to display records for: \n> ");
             int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
 
             if (length > 0) break;

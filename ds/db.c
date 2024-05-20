@@ -493,3 +493,35 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
 
     return kStatus_Success;
 }
+
+status_t DB_DropTable(database_t *db, int tableId) {
+    if(db == NULL) return kStatus_InvalidArgument;
+    if(tableId > db->schema->numTables) return kStatus_Schema_UnknownTableId;
+
+    SCHEMA_DestroyTableStructure(db->schema, tableId);
+
+    if(db->tables[tableId].data != NULL) free(db->tables[tableId].data);
+    
+    if(db->schema->numTables == 0) {
+        free(db->tables);
+        db->tables = NULL;
+    } else {
+        table_t *newTables = (table_t *)malloc(sizeof(table_t) * (db->schema->numTables));
+        if(newTables == NULL) return kStatus_AllocError;
+
+        int i = 0;
+        int dataIndex = 0;
+        for(i = 0; i < db->schema->numTables; i++) {
+            if(i == tableId) continue;
+
+            newTables[dataIndex] = db->tables[i];
+            newTables[dataIndex].tableId = dataIndex;
+            dataIndex++;
+        }
+
+        free(db->tables);
+        db->tables = newTables;
+    }
+
+    return kStatus_Success;
+}

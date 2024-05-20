@@ -37,11 +37,17 @@ void SCREEN_ClearScreen(void); /* printf("\033[2J\033[1;1H"); */
 void SCREEN_Print(char *text, text_color_t color);
 
 /**
- * @brief Prints an error message to the terminal with a specified error
- * code
+ * @brief Prints an error message to the terminal
  * 
  * @param[in] text Error message
  */
 void SCREEN_PrintError(char *text);
+
+/**
+ * @brief Prints an input prompt to the terminal
+ * 
+ * @param text 
+ */
+void SCREEN_PrintInput(char *text);
 
 #endif

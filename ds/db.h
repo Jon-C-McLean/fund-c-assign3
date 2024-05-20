@@ -67,10 +67,10 @@ status_t DB_CreateTable(database_t *db, char *name, table_col_def_t *columns, in
  * it from the schema.
  * 
  * @param[inout] db The database to drop the table from.
- * @param[in] name The name of the table to drop.
+ * @param[in] tableId The ID of the table to drop
  * @return status_t Status of the operation
  */
-status_t DB_DropTable(database_t *db, char *name);
+status_t DB_DropTable(database_t *db, int tableId);
 
 /**
  * @brief Inserts a row into the specified table.
