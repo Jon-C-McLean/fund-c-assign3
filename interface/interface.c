@@ -533,7 +533,7 @@ void GUI_SchemaOperationsLoop(database_t *db) {
             case 1: 
                 status = GUI_CreateTable(db);
                 if(status != kStatus_Success) {
-                    printf("Error creating table %d\n", status);
+                    SCREEN_PrintError("An error occured creating the table\n");
                 } else {
                     SCREEN_ClearScreen();
                 }
@@ -546,7 +546,11 @@ void GUI_SchemaOperationsLoop(database_t *db) {
             case 2:
                 status = GUI_DeleteTable(db);
                 if(status != kStatus_Success) {
-                    printf("Error deleting table %d\n", status);
+                    if(status == kStatus_Schema_UnknownTableId) {
+                        SCREEN_PrintError("The specified table does not exist or could not be found\n");
+                    } else {
+                        SCREEN_PrintError("An error occured deleting the table\n");
+                    }
                 } else {
                     SCREEN_ClearScreen();
                 }
@@ -559,7 +563,11 @@ void GUI_SchemaOperationsLoop(database_t *db) {
             case 3:
                 status = GUI_AddColumn(db);
                 if(status != kStatus_Success) {
-                    printf("Error adding column %d\n", status);
+                    if(status == kStatus_Schema_UnknownTableId) {
+                        SCREEN_PrintError("The specified table does not exist or could not be found\n");
+                    } else {
+                        SCREEN_PrintError("An error occured adding the column\n");
+                    }
                 } else {
                     SCREEN_ClearScreen();
                 }
@@ -571,7 +579,11 @@ void GUI_SchemaOperationsLoop(database_t *db) {
             case 5:
                 status = GUI_DisplayTableSchema(db, -1);
                 if(status != kStatus_Success) {
-                    printf("Error displaying table schema %d\n", status);
+                    if(status == kStatus_Schema_UnknownTableId) {
+                        SCREEN_PrintError("The specified table does not exist or could not be found\n");
+                    } else {
+                        SCREEN_PrintError("An error occured displaying the schema\n");
+                    }
                 } else {
                     SCREEN_ClearScreen();
                 }
@@ -810,7 +822,7 @@ status_t GUI_DisplayTableSchema(database_t *db, int tableId) {
     if(tableId == -1) {
         char tableName[MAX_TABLE_NAME_SIZE];
         while(1) {
-            SCREEN_PrintInput("Enter the name of the table you wish to display records for: \n> ");
+            SCREEN_PrintInput("Enter the name of the table you wish to display the schema for: \n> ");
             int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
 
             if (length > 0) break;
