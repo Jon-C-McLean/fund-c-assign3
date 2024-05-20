@@ -511,7 +511,7 @@ status_t DB_DropTable(database_t *db, int tableId) {
 
         int i = 0;
         int dataIndex = 0;
-        for(i = 0; i < db->schema->numTables; i++) {
+        for(i = 0; i < db->schema->numTables+1; i++) {
             if(i == tableId) continue;
 
             newTables[dataIndex] = db->tables[i];
