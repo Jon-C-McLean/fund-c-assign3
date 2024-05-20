@@ -15,12 +15,12 @@
 #define MAX_TABLE_NAME_SIZE 100U
 #define MAX_COLUMN_NAME_SIZE 100U
 #define MAX_TABLES 25U
+#define MAX_COLUMN_DATA_SIZE 500U
 
 /* Schema used to define a user-defined table's structure and metadata */
 
 typedef enum {
     INT,
-    DECIMAL,
     STRING,
     KEY,
 } column_type_t;
