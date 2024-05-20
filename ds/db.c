@@ -124,10 +124,12 @@ status_t DB_CreateTable(database_t *db, char *name, table_col_def_t *columns, in
     printf("Row Size %d\n", rowSize);
     printf("Num tables: %d\n", db->schema->numTables);
 
-    db->tables[db->schema->numTables].data = NULL;
-    db->tables[db->schema->numTables].rows = 0;
-    db->tables[db->schema->numTables].rowSize = rowSize;
-    db->tables[db->schema->numTables].tableId = db->schema->numTables;
+    db->tables[db->schema->numTables-1].data = NULL;
+    db->tables[db->schema->numTables-1].rows = 0;
+    db->tables[db->schema->numTables-1].rowSize = rowSize;
+    db->tables[db->schema->numTables-1].tableId = db->schema->numTables - 1;
+
+    printf("Table Row Size: %d", db->tables[db->schema->numTables].rowSize);
 
     printf("Table Address: %p\n", db->tables + ((db->schema->numTables * sizeof(table_t))));
 
