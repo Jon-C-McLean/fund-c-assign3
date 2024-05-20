@@ -94,7 +94,6 @@ status_t DB_CreateTable(database_t *db, char *name, table_col_def_t *columns, in
     } else {
         table_t *tableRealloc = (table_t *)realloc(db->tables, sizeof(table_t) * (db->schema->numTables));
         if(db->tables == NULL) { 
-            printf("Failed to realloc memory for tables\n");
             /* Attempt to roll back schema creation */
             (void)SCHEMA_DestroyTableStructure(db->schema, db->schema->numTables - 1);
             return kStatus_AllocError;
@@ -104,9 +103,7 @@ status_t DB_CreateTable(database_t *db, char *name, table_col_def_t *columns, in
     }
     
     table_schema_def_t *table = &(db->schema->tables[db->schema->numTables-1]);
-    printf("Table Name: %s\n", table->tableName);
     for(i = 0; i < table->numColumns; i++) {
-        printf("Column Size: %d\n", table->columns[i].size);
         switch(table->columns[i].type) {
             case INT:
                 rowSize += sizeof(int);
@@ -120,18 +117,10 @@ status_t DB_CreateTable(database_t *db, char *name, table_col_def_t *columns, in
                 return kStatus_Schema_UnknownColumn; /* XXX: Is this the right error? */
         }
     }
-
-    printf("Row Size %d\n", rowSize);
-    printf("Num tables: %d\n", db->schema->numTables);
-
     db->tables[db->schema->numTables-1].data = NULL;
     db->tables[db->schema->numTables-1].rows = 0;
     db->tables[db->schema->numTables-1].rowSize = rowSize;
     db->tables[db->schema->numTables-1].tableId = db->schema->numTables - 1;
-
-    printf("Table Row Size: %d", db->tables[db->schema->numTables].rowSize);
-
-    printf("Table Address: %p\n", db->tables + ((db->schema->numTables * sizeof(table_t))));
 
     return kStatus_Success;
 }
@@ -140,17 +129,14 @@ status_t DB_InsertRow(database_t *db, int tableId, void *values) {
     if(db == NULL || values == NULL) return kStatus_InvalidArgument;
     if(tableId > db->schema->numTables) return kStatus_Schema_UnknownTableId;
 
-    printf("Table ID: %d\n", tableId);
-    printf("Table Address: %p\n", &db->tables[tableId]);
-
     if(db->tables[tableId].data == NULL) {
-        printf("Table Name: %s\n", db->schema->tables[tableId].tableName);
-        printf("Allocating memory for table %d with size %d\n", tableId, db->tables[tableId].rowSize);
         db->tables[tableId].data = (char *)malloc(db->tables[tableId].rowSize);
+        if(db->tables[tableId].data == NULL) return kStatus_AllocError;
     } else {
         printf("Reallocating memory for table\n");
         db->tables[tableId].data = (char *)realloc(db->tables[tableId].data, 
             (db->tables[tableId].rows+1) * db->tables[tableId].rowSize);
+        if(db->tables[tableId].data == NULL) return kStatus_AllocError;
     }
 
     if(db->tables[tableId].data == NULL) return kStatus_AllocError;
