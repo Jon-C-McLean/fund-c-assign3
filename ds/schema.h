@@ -159,15 +159,4 @@ status_t SCHEMA_GetIDForColumn(table_schema_def_t *table, char *name, int *colum
  */
 status_t SCHEMA_AddColumn(database_schema_t *schema, int tableId, char *name, column_type_t type, int maxSize, int isPrimaryKey);
 
-/**
- * @brief Deletes a column from a table schema
- * @author Jon McLean (13515869)
- * 
- * @param[inout] schema Schema containing the table
- * @param tableId ID of the table to delete the column from
- * @param name Name of the targeted column
- * @return status_t Status of the operation
- */
-status_t SCHEMA_DeleteColumn(database_schema_t *schema, int tableId, char *name);
-
 #endif

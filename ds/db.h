@@ -112,6 +112,7 @@ status_t DB_FindRowsWithColumnValue(database_t *db, int tableId, int columnId, v
 
 /**
  * @brief Builds a binary representation of the database in memory
+ * @author Jon McLean (13515869)
  * 
  * @param[in] db The database to build the binary data from
  * @param[inout] data The resulting binary data
@@ -145,6 +146,18 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
  */
 status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize);
 
+/**
+ * @brief Finds a row in a table with the specified primary key
+ * and returns the index of the row in the table. If the row
+ * is not found, the index will be -1 and a failed status will be returned.
+ * @author Jon McLean (13515869)
+ * 
+ * @param[in] db The database containing the table to search
+ * @param[in] tableId The ID of the table to search
+ * @param[in] key The key to search for
+ * @param[inout] index The resulting index of the found row
+ * @return status_t The status of the operation
+ */
 status_t DB_FindRowWithKey(database_t *db, int tableId, int key, int *index);
 
 #endif

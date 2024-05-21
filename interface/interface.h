@@ -139,8 +139,27 @@ status_t GUI_CreateRecordForTable(database_t *db);
  */
 status_t GUI_UpdateRecordForTable(database_t *db);
 
+/**
+ * @brief Prompts the user to delete a record in a specified table. The function
+ * will prompt the user to enter the primary key of the record/row they wish to
+ * delete. The function will then delete the record from the table.
+ * @author Jon McLean (13515869)
+ * 
+ * @param[inout] db 
+ * @return status_t The status of the operation
+ */
 status_t GUI_RemoveRowForTable(database_t *db);
 
+/**
+ * @brief Prompts the user to perform a search on a specified table. The function
+ * will prompt the user to enter a search term and the column they wish to search
+ * in. The function will then display all rows within a user-specified table
+ * that match the search term.
+ * @author Jon McLean (13515869)
+ * 
+ * @param[inout] db 
+ * @return status_t 
+ */
 status_t GUI_FindRowsForTable(database_t *db);
 
 /* Schema Operations */

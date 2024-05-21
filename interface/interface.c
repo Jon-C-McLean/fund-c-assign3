@@ -151,7 +151,7 @@ database_t* GUI_CreateDefaultDatabase(void) {
 /* General Operations */
 void GUI_DataOperationsLoop(database_t *db) {
     if(db == NULL) {
-        printf("No database loaded, please load or create a database\n");
+        SCREEN_PrintError("No database loaded, please load or create a database\n");
         return;
     }
 
@@ -169,26 +169,18 @@ void GUI_DataOperationsLoop(database_t *db) {
                 (void)GUI_ListTables(db);
 
                 SCREEN_ClearScreen();
-                printf("Data Operations\n");
-                printf("===============\n");
-                GUI_PrintDataOperationsMenu(db);
                 break;
             case 2:
                 (void)GUI_DisplayTable(db, NULL, 1);
 
                 SCREEN_ClearScreen();
-                printf("Data Operations\n");
-                printf("===============\n");
-                GUI_PrintDataOperationsMenu(db);
                 break;
             case 3:
                 if((status = GUI_CreateRecordForTable(db)) != kStatus_Success) {
                 } else {
                     SCREEN_ClearScreen();
                 }
-                printf("Data Operations\n");
-                printf("===============\n");
-                GUI_PrintDataOperationsMenu(db);
+                
                 break;
             case 4:
                 if((status = GUI_UpdateRecordForTable(db)) != kStatus_Success && status != kStatus_Fail) {
@@ -196,9 +188,6 @@ void GUI_DataOperationsLoop(database_t *db) {
                     SCREEN_ClearScreen();
                 }
 
-                printf("Data Operations\n");
-                printf("===============\n");
-                GUI_PrintDataOperationsMenu(db);
                 break;
             case 5:
                 if((status = GUI_RemoveRowForTable(db)) != kStatus_Success) {
@@ -208,21 +197,14 @@ void GUI_DataOperationsLoop(database_t *db) {
                     SCREEN_ClearScreen();
                 }
 
-                printf("Data Operations\n");
-                printf("===============\n");
-                GUI_PrintDataOperationsMenu(db);
                 break;
             case 6:
                 if((status = GUI_FindRowsForTable(db)) != kStatus_Success) {
-                    SCREEN_PrintError("An error occured finding \
-                        the record, please try again\n");
+                    SCREEN_PrintError("An error occured finding "
+                        "the record, please try again\n");
                 } else {
                     SCREEN_ClearScreen();
                 }
-
-                printf("Data Operations\n");
-                printf("===============\n");
-                GUI_PrintDataOperationsMenu(db);
                 break;
             case -1:
                 SCREEN_PrintError("An internal error has occured, "
@@ -233,6 +215,10 @@ void GUI_DataOperationsLoop(database_t *db) {
                 SCREEN_ClearScreen();
                 return;
         }
+
+        printf("Data Operations\n");
+        printf("===============\n");
+        GUI_PrintDataOperationsMenu(db);
     }
 }
 
@@ -558,7 +544,7 @@ status_t GUI_FindRowsForTable(database_t *db) {
     SCREEN_ClearScreen();
 
     while(1) {
-        printf("Enter the name of the table you wish to search within: \n> ");
+        SCREEN_PrintInput("Enter the name of the table you wish to search within: \n> ");
         length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
 
         if (length > 0) break;
@@ -566,8 +552,11 @@ status_t GUI_FindRowsForTable(database_t *db) {
 
     tableId = -1;
     result = SCHEMA_GetTableIdForName(db->schema, tableName, &tableId);
-    if(result != kStatus_Success) return result;
-    if(tableId == -1) return kStatus_Schema_UnknownTableId;
+    if(result != kStatus_Success || tableId != -1) {
+        DEBUG_PRINT(("Failed to find table with status %d\n", result));
+        SCREEN_PrintError("Failed to find table\n");
+        return kStatus_Fail;
+    }
 
     result = SCHEMA_GetTableForId(db->schema, tableId, &table);
     if(result != kStatus_Success) return result;
@@ -575,18 +564,18 @@ status_t GUI_FindRowsForTable(database_t *db) {
     GUI_DisplayTableSchema(db, tableId);
 
     while(1) {
-        printf("Enter the column you wish to search by: \n> ");
+        SCREEN_PrintInput("Enter the column you wish to search by: \n> ");
         INPUT_GetString(columnName, MAX_COLUMN_NAME_SIZE);
         result = SCHEMA_GetIDForColumn(table, columnName, &columnId);
         if(result != kStatus_Success || columnId == -1) {
-            printf("This column does not exist, try again...\n");
+            SCREEN_PrintError("This column does not exist, try again...\n");
         } else {
             column = &(table->columns[columnId]);
             break;
         }
     }
 
-    printf("Enter the value you wish to search for: \n> ");
+    SCREEN_PrintInput("Enter the value you wish to search for: \n> ");
     value = malloc(column->type == INT ? sizeof(int) : column->size);
 
     if(value == NULL) {
@@ -662,7 +651,7 @@ status_t GUI_FindRowsForTable(database_t *db) {
 /* Schema Operations */
 void GUI_SchemaOperationsLoop(database_t *db) {
     if(db == NULL) {
-        printf("No database loaded, please load or create a database\n");
+        SCREEN_PrintError("No database loaded, please load or create a database\n");
         return;
     }
 
