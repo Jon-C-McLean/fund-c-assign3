@@ -37,7 +37,7 @@ status_t SCHEMA_CreateDefaultDatabaseSchema(database_schema_t **schema) {
 
     strncpy(employeeColumns[0].columnName, "EmployeeID", MAX_COLUMN_NAME_SIZE);
     employeeColumns[0].type = INT;
-    employeeColumns[0].size = 4;
+    employeeColumns[0].size = sizeof(int);
     employeeColumns[0].isPrimaryKey = 1;
 
     strncpy(employeeColumns[1].columnName, "Name", MAX_COLUMN_NAME_SIZE);
@@ -206,5 +206,24 @@ status_t SCHEMA_GetColumnForName(table_schema_def_t *table, char *name, table_co
 
     DEBUG_PRINT("Column not found for name: %s\n", name);
 
+    return kStatus_Schema_UnknownColumn;
+}
+
+status_t SCHEMA_GetIDForColumn(table_schema_def_t *table, char *name, int *columnId) {
+    int i = 0;
+    if(table == NULL || name == NULL || columnId == NULL) {
+        return kStatus_InvalidArgument;
+    }
+
+    for(i = 0; i < table->numColumns; i++) {
+        if(strcmp(table->columns[i].columnName, name) == 0) {
+            *columnId = i;
+            return kStatus_Success;
+        }
+    }
+
+    DEBUG_PRINT("Column not found for name: %s\n", name);
+
+    *columnId = -1;
     return kStatus_Schema_UnknownColumn;
 }

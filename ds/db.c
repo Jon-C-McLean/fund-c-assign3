@@ -599,3 +599,65 @@ status_t DB_DropTable(database_t *db, int tableId) {
 
     return kStatus_Success;
 }
+
+status_t DB_FindRowsWithColumnValue(database_t *db, int tableId, int columnId, void *value, int **indexes, int *numIndexes) {
+    if(db == NULL || value == NULL || indexes == NULL || numIndexes == NULL) return kStatus_InvalidArgument;
+    if(tableId > db->schema->numTables) return kStatus_Schema_UnknownTableId;
+
+    DEBUG_PRINT("Finding rows in table %d with column %d matching value\n", tableId, columnId);
+    table_schema_def_t *table = &(db->schema->tables[tableId]);
+    if(columnId > table->numColumns) return kStatus_Schema_UnknownColumn;
+
+    int i = 0;
+
+    /* Allocate worst case result size */
+    int *foundIndexes = (int *)malloc(sizeof(int) * db->tables[tableId].rows);
+    if(foundIndexes == NULL) {
+        DEBUG_PRINT("Failed to allocate memory for indexes\n");
+        return kStatus_AllocError;
+    }
+
+    int offset = 0;
+    for(i = 0; i < columnId; i++) {
+        switch(table->columns[i].type) {
+            case INT:
+                offset += sizeof(int);
+                break;
+            case STRING:
+                offset += table->columns[i].size;
+                break;
+            case KEY:
+                exit(-3); /* XXX: Not implemented */
+            default:
+                return kStatus_Schema_UnknownColumn; /* XXX: Is this the right error? */
+        }
+    }
+
+    table_t *tableData = &db->tables[tableId];
+    int found = 0;
+    for(i = 0; i < tableData->rows; i++) {
+        switch(table->columns[columnId].type) {
+            case INT:
+                if(*(int *)(tableData->data + (i * tableData->rowSize) + offset) == *(int *)value) {
+                    foundIndexes[found] = i;
+                    found++;
+                }
+                break;
+            case STRING:
+                if(strncmp(tableData->data + (i * tableData->rowSize) + offset, (char *)value, table->columns[columnId].size) == 0) {
+                    foundIndexes[found] = i;
+                    found++;
+                }
+                break;
+            case KEY:
+                exit(-3); /* XXX: Not implemented */
+            default:
+                return kStatus_Schema_UnknownColumn; /* XXX: Is this the right error? */
+        }
+    }
+
+    *indexes = foundIndexes;
+    *numIndexes = found;
+
+    return kStatus_Success;
+}

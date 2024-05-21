@@ -200,16 +200,27 @@ void GUI_DataOperationsLoop(database_t *db) {
                         the record, please try again\n");
                 } else {
                     SCREEN_ClearScreen();
-                    printf("Data Operations\n");
-                    printf("===============\n");
-                    GUI_PrintDataOperationsMenu(db);
                 }
+
+                printf("Data Operations\n");
+                printf("===============\n");
+                GUI_PrintDataOperationsMenu(db);
                 break;
             case 6:
+                if((status = GUI_FindRowsForTable(db)) != kStatus_Success) {
+                    SCREEN_PrintError("An error occured finding \
+                        the record, please try again\n");
+                } else {
+                    SCREEN_ClearScreen();
+                }
+
+                printf("Data Operations\n");
+                printf("===============\n");
+                GUI_PrintDataOperationsMenu(db);
                 break;
             case -1:
-                SCREEN_PrintError("An internal error has occured, \
-                    please try agian\n");
+                SCREEN_PrintError("An internal error has occured, "
+                    "please try agian\n");
                 return;
             case 7: 
                 /* Return to main menu*/
@@ -521,7 +532,7 @@ status_t GUI_FindRowsForTable(database_t *db) {
 
     char tableName[MAX_TABLE_NAME_SIZE];
     while(1) {
-        printf("Enter the name of the table you wish to delete a record from: \n> ");
+        printf("Enter the name of the table you wish to search within: \n> ");
         int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
 
         if (length > 0) break;
@@ -539,37 +550,90 @@ status_t GUI_FindRowsForTable(database_t *db) {
     GUI_DisplayTableSchema(db, tableId);
     
     table_col_def_t *column = NULL;
+    int columnId = -1;
     while(1) {
         printf("Enter the column you wish to search by: \n> ");
         char columnName[MAX_COLUMN_NAME_SIZE];
         INPUT_GetString(columnName, MAX_COLUMN_NAME_SIZE);
-        result = SCHEMA_GetColumnForName(table, columnName, &column);
-        if(result != kStatus_Success) {
+        result = SCHEMA_GetIDForColumn(table, columnName, &columnId);
+        if(result != kStatus_Success || columnId == -1) {
             printf("This column does not exist, try again...\n");
         } else {
+            column = &(table->columns[columnId]);
             break;
         }
     }
 
     printf("Enter the value you wish to search for: \n> ");
+    void *value = malloc(column->type == INT ? sizeof(int) : column->size);
+
+    if(value == NULL) {
+        DEBUG_PRINT("Failed to allocate memory for value\n");
+        return kStatus_AllocError;
+    }
+
     switch(column->type) {
-        // case INT:
-        //     int value;
-        //     INPUT_GetInteger(&value);
-        //     break;
-        // case STRING:
-        //     char value[MAX_COLUMN_NAME_SIZE];
-        //     INPUT_GetString(value, MAX_COLUMN_NAME_SIZE);
-        //     break;
+        case INT:
+            INPUT_GetInteger((int*)value);
+            break;
+        case STRING:
+            INPUT_GetString((char *)value, column->size);
+            break;
         default:
             return kStatus_Fail;
     }
-    
-    // Get value to search for
 
-    // Search for rows
-    // Display found rows
-    // Wait for key press
+    int *foundIndexes = NULL;
+    int numIndexes = 0;
+    DB_FindRowsWithColumnValue(db, tableId, columnId, value, &foundIndexes, &numIndexes);
+
+    if(numIndexes == 0) {
+        if(foundIndexes != NULL) free(foundIndexes);
+        free(value);
+
+        SCREEN_PrintError("No records found\n");
+        INPUT_WaitForAnyKey("Press any key to return to menu");
+        return kStatus_Success;
+    }
+
+    printf("\n\n");
+    int i = 0, j = 0;
+    int totalWidth = 0;
+    for(i = 0; i < table->numColumns; i++) {
+        int columnWidth = max(strlen(table->columns[i].columnName), table->columns[i].size);
+        totalWidth += columnWidth + 3;
+        printf("%-*s | ", columnWidth, table->columns[i].columnName);
+    }
+    printf("\n");
+    char lineBuffer[totalWidth+1];
+    memset(lineBuffer, '-', totalWidth);
+    lineBuffer[totalWidth] = '\0';
+
+    DEBUG_PRINT("Found %d indexes\n", numIndexes);
+
+    for(i = 0; i < numIndexes; i++) {
+        int index = foundIndexes[i];
+        printf("%s\n", lineBuffer);
+        int columnOffset = 0;
+        for(j = 0; j < table->numColumns; j++) {
+            int columnWidth = max(strlen(table->columns[j].columnName), table->columns[j].size);
+            switch(table->columns[j].type) {
+                case INT:
+                    printf("%-*d | ", columnWidth, *((int *)(db->tables[tableId].data + (index * db->tables[tableId].rowSize) + columnOffset)));
+                    columnOffset += sizeof(int);
+                    break;
+                case STRING:
+                    printf("%-*s | ", columnWidth, db->tables[tableId].data + (index * db->tables[tableId].rowSize) + columnOffset);
+                    columnOffset += table->columns[j].size;
+                    break;
+                default:
+                    return kStatus_Schema_UnknownError;
+            }
+        }
+        printf("\n");
+    }
+
+    INPUT_WaitForAnyKey("\n\nPress any key to return to menu");
 
     return kStatus_Success;
 }
@@ -816,7 +880,10 @@ status_t GUI_AddColumn(database_t *db) {
     if(columnType == 2) {
         SCREEN_PrintInput("Enter the size of the column you wish to add: \n> ");
         INPUT_GetInteger(&columnSize);
+    } else {
+        columnSize = sizeof(int);
     }
+    
     int columnCount = table->numColumns;
     table->columns = table->columns; /* Get columns before change */
     SCHEMA_AddColumn(db->schema, tableId, columnName, columnType-1, columnSize, 0); /* TODO: Add primary key support */
@@ -911,7 +978,7 @@ status_t GUI_DisplayTableSchema(database_t *db, int tableId) {
     
     int i = 0;
     for(i = 0; i < table->numColumns; i++) {
-        printf("%10d | %-*s |\n", i, MAX_COLUMN_NAME_SIZE, table->columns[i].columnName);
+        printf(" %10d | %-*s |\n", i, MAX_COLUMN_NAME_SIZE, table->columns[i].columnName);
         printf("------------|-%s-|\n", lineBuffer);
     }
 

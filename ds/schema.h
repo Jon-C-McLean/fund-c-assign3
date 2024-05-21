@@ -137,6 +137,16 @@ status_t SCHEMA_DestroyTableStructure(database_schema_t *schema, int index);
 status_t SCHEMA_GetColumnForName(table_schema_def_t *table, char *name, table_col_def_t **column);
 
 /**
+ * @brief Get the column ID for a given column name in a table schema
+ * 
+ * @param[in] table 
+ * @param[in] name 
+ * @param[inout] columnId 
+ * @return status_t The status of the operation
+ */
+status_t SCHEMA_GetIDForColumn(table_schema_def_t *table, char *name, int *columnId);
+
+/**
  * @brief Adds a column to a table schema
  * @author Jon McLean (13515869)
  * 

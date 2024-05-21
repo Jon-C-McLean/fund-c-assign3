@@ -96,19 +96,28 @@ status_t DB_InsertRow(database_t *db, int tableId, void *values);
 status_t DB_DeleteRow(database_t *db, int tableId, int rowId);
 
 /**
- * @brief Selects a row from the specified table.
+ * @brief Finds a set of rows in the specified table that match the given value 
+ * in the given column.
  * @author Jon McLean (13515869)
  * 
- * @param[in] db The database to select the row from.
- * @param[in] tableName The name of the table to select the row from.
- * @param[in] rowId The ID of the row to select.
- * @param[out] values The values of the row.
+ * @param[in] db The database to search in.
+ * @param[in] tableId The ID of the table to search in.
+ * @param[in] columnId The ID of the column to search in.
+ * @param[in] value The value to search for.
+ * @param[inout] indexes The resulting indexes of the rows that match the search
+ * @param[inout] numIndexes The number of indexes in the resulting array
  * @return status_t Status of the operation
  */
-status_t DB_SelectRow(database_t *db, char *tableName, int rowId, void **values);
+status_t DB_FindRowsWithColumnValue(database_t *db, int tableId, int columnId, void *value, int **indexes, int *numIndexes);
 
-/* TODO: Search/select functions */
-
+/**
+ * @brief Builds a binary representation of the database in memory
+ * 
+ * @param[in] db The database to build the binary data from
+ * @param[inout] data The resulting binary data
+ * @param[inout] size The size of the resulting binary data
+ * @return status_t Status of the operation
+ */
 status_t DB_BuildBinaryData(database_t *db, char **data, int *size);
 
 /**
