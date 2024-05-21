@@ -441,7 +441,14 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
         }
 
         if(padding != 0) { /* TODO: Fixed unused result*/
-            (void)realloc(binaryData, binarySize + padding);
+            void *relloaced = realloc(binaryData, binarySize + padding);
+            if(relloaced == NULL) {
+                DEBUG_PRINT("Failed to reallocate memory for padding\n");
+                (void)fclose(file);
+                free(binaryData);
+                return kStatus_AllocError;
+            }
+            binaryData = relloaced;
 
             /* Read in padding bytes */
             (void)fread(binaryData + binarySize, padding, 1, file);
