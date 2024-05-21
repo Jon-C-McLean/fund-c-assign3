@@ -8,6 +8,10 @@
 
 #include <stdio.h>
 
+#if defined(DEBUG) && DEBUG == 1
+    #define DISABLE_SCREEN_CLEARING
+#endif
+
 typedef enum {
     kColor_Black,
     kColor_Red,

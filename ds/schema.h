@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "../utils/errors.h"
+#include "../utils/misc.h"
 
 #define MAX_DB_NAME_SIZE 100U
 #define MAX_TABLE_NAME_SIZE 100U

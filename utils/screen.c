@@ -31,7 +31,9 @@ static char* SCREEN_GetColorCode(text_color_t color) {
 /* Public Functions*/
 
 void SCREEN_ClearScreen(void) {
+#ifndef DISABLE_SCREEN_CLEARING
     printf("\033[2J\033[1;1H");
+#endif
 }
 
 void SCREEN_Print(char *text, text_color_t color) {

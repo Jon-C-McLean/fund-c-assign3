@@ -6,6 +6,13 @@
 #ifndef MISC_H
 #define MISC_H
 
+#if defined(DEBUG) && DEBUG == 1
+    #include <stdio.h>
+    #define DEBUG_PRINT(...) printf(__VA_ARGS__)
+#else
+    #define DEBUG_PRINT(...)
+#endif
+
 /**
  * @brief Get the maximum of two integers
  * @author Jon McLean (13515869)

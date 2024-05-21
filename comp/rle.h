@@ -6,6 +6,7 @@
 #define RLE_H_
 
 #include <stdlib.h>
+#include "../utils/misc.h"
 
 /**
  * @brief Perform run length encoding on a given input buffer

@@ -10,6 +10,7 @@
 #include "../comp/rle.h"
 #include "../enc/aes.h"
 #include "../utils/rand.h"
+#include "../utils/misc.h"
 
 typedef struct {
     char *data;
