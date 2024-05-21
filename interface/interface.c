@@ -651,7 +651,7 @@ void GUI_SchemaOperationsLoop(database_t *db) {
     GUI_PrintSchemaOperationsMenu();
 
     while(1) {
-        int selection = GUI_GetOptionSelection(1, 7, "Please select an option (1-7): ");
+        int selection = GUI_GetOptionSelection(1, 7, "Please select an option (1-6): ");
         status_t status = kStatus_Success;
 
         switch(selection) {
