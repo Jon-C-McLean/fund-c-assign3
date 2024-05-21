@@ -728,8 +728,8 @@ void GUI_SchemaOperationsLoop(database_t *db) {
 }
 
 void GUI_PrintSchemaOperationsMenu() {
-    printf("1. Create Table\n"); /* TODO */
-    printf("2. Delete Table\n"); /* TODO */
+    printf("1. Create Table\n");
+    printf("2. Delete Table\n");
     printf("3. Add Column\n");
     printf("4. Delete Column\n"); /* TODO */
     printf("5. Display Table Schema\n");
