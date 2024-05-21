@@ -1012,6 +1012,12 @@ void GUI_Main() {
                 GUI_PrintMainMenu();
                 break;
             case 2: /* Create default E-DB */
+                if(db != NULL) {
+                    SCREEN_PrintError("A database is already loaded, please " 
+                        "save and close it before creating a new one\n");
+                    GUI_PrintMainMenu();
+                    break;
+                }
                 db = GUI_CreateDefaultDatabase();
                 if(db == NULL) {
                     SCREEN_PrintError("Error creating default database\n");
