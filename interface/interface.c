@@ -180,7 +180,7 @@ void GUI_DataOperationsLoop(database_t *db) {
                 } else {
                     SCREEN_ClearScreen();
                 }
-                
+
                 break;
             case 4:
                 if((status = GUI_UpdateRecordForTable(db)) != kStatus_Success && status != kStatus_Fail) {
@@ -552,7 +552,7 @@ status_t GUI_FindRowsForTable(database_t *db) {
 
     tableId = -1;
     result = SCHEMA_GetTableIdForName(db->schema, tableName, &tableId);
-    if(result != kStatus_Success || tableId != -1) {
+    if(result != kStatus_Success || tableId == -1) {
         DEBUG_PRINT(("Failed to find table with status %d\n", result));
         SCREEN_PrintError("Failed to find table\n");
         return kStatus_Fail;
@@ -564,11 +564,11 @@ status_t GUI_FindRowsForTable(database_t *db) {
     GUI_DisplayTableSchema(db, tableId);
 
     while(1) {
-        SCREEN_PrintInput("Enter the column you wish to search by: \n> ");
+        SCREEN_PrintInput("Enter the column name you wish to search by: \n> ");
         INPUT_GetString(columnName, MAX_COLUMN_NAME_SIZE);
         result = SCHEMA_GetIDForColumn(table, columnName, &columnId);
         if(result != kStatus_Success || columnId == -1) {
-            SCREEN_PrintError("This column does not exist, try again...\n");
+            SCREEN_PrintError("This column does not exist\n");
         } else {
             column = &(table->columns[columnId]);
             break;
@@ -673,10 +673,6 @@ void GUI_SchemaOperationsLoop(database_t *db) {
                     SCREEN_ClearScreen();
                 }
 
-                printf("Schema Operations\n");
-                printf("================\n");
-                GUI_PrintSchemaOperationsMenu(db);
-
                 break;
             case 2:
                 status = GUI_DeleteTable(db);
@@ -689,10 +685,6 @@ void GUI_SchemaOperationsLoop(database_t *db) {
                 } else {
                     SCREEN_ClearScreen();
                 }
-
-                printf("Schema Operations\n");
-                printf("================\n");
-                GUI_PrintSchemaOperationsMenu(db);
 
                 break;
             case 3:
@@ -707,9 +699,6 @@ void GUI_SchemaOperationsLoop(database_t *db) {
                     SCREEN_ClearScreen();
                 }
 
-                printf("Schema Operations\n");
-                printf("================\n");
-                GUI_PrintSchemaOperationsMenu();
                 break;
             case 4:
                 status = GUI_DisplayTableSchema(db, -1);
@@ -723,9 +712,7 @@ void GUI_SchemaOperationsLoop(database_t *db) {
                     SCREEN_ClearScreen();
                 }
 
-                printf("Schema Operations\n");
-                printf("================\n");
-                GUI_PrintSchemaOperationsMenu();
+                return;
             case -1:
                 SCREEN_PrintError("An internal error has occured, "
                     "please try agian\n");
@@ -735,6 +722,10 @@ void GUI_SchemaOperationsLoop(database_t *db) {
                 SCREEN_ClearScreen();
                 return;
         }
+
+        printf("Schema Operations\n");
+        printf("================\n");
+        GUI_PrintSchemaOperationsMenu(db);
     }
 }
 
@@ -961,6 +952,7 @@ status_t GUI_DisplayTableSchema(database_t *db, int tableId) {
     int i = 0, length = 0;
     status_t result;
     table_schema_def_t *table = NULL;
+    int showWait = 0;
     char lineBuffer[MAX_COLUMN_NAME_SIZE+1] = {'\0'};
 
     if(db == NULL) return kStatus_InvalidArgument;
@@ -968,6 +960,7 @@ status_t GUI_DisplayTableSchema(database_t *db, int tableId) {
 
     if(tableId == -1) {
         char tableName[MAX_TABLE_NAME_SIZE];
+        showWait = 1;
         while(1) {
             SCREEN_PrintInput("Enter the name of the table you wish to display the schema for: \n> ");
             length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
@@ -998,8 +991,8 @@ status_t GUI_DisplayTableSchema(database_t *db, int tableId) {
         printf("------------|-%s-|\n", lineBuffer);
     }
 
-    if(tableId == -1) {
-        INPUT_WaitForAnyKey("\n\nPress any key to return to menu");
+    if(showWait) {
+        INPUT_WaitForAnyKey("\n\nPress any key to return to menu");        
     }
 
     return kStatus_Success;
