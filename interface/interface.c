@@ -205,6 +205,8 @@ void GUI_DataOperationsLoop(database_t *db) {
                     GUI_PrintDataOperationsMenu(db);
                 }
                 break;
+            case 6:
+                break;
             case -1:
                 SCREEN_PrintError("An internal error has occured, \
                     please try agian\n");
@@ -222,8 +224,8 @@ void GUI_PrintDataOperationsMenu(database_t *db) {
     printf("2. Display Table\n");
     printf("3. Create Record\n");
     printf("4. Update Record\n");
-    printf("5. Delete Record\n"); /* TODO */
-    printf("6. Find Record(s)\n"); /* TODO */
+    printf("5. Delete Record\n");
+    printf("6. Find Record(s)\n");
     printf("7. Return to Main Menu\n");
 }
 
@@ -511,6 +513,65 @@ status_t GUI_RemoveRowForTable(database_t *db) {
     }
 
     return DB_DeleteRow(db, tableId, index);
+}
+
+status_t GUI_FindRowsForTable(database_t *db) {
+    if(db == NULL) return kStatus_InvalidArgument;
+    SCREEN_ClearScreen();
+
+    char tableName[MAX_TABLE_NAME_SIZE];
+    while(1) {
+        printf("Enter the name of the table you wish to delete a record from: \n> ");
+        int length = INPUT_GetString(tableName, MAX_TABLE_NAME_SIZE);
+
+        if (length > 0) break;
+    }
+
+    int tableId = -1;
+    status_t result = SCHEMA_GetTableIdForName(db->schema, tableName, &tableId);
+    if(result != kStatus_Success) return result;
+    if(tableId == -1) return kStatus_Schema_UnknownTableId;
+
+    table_schema_def_t *table;
+    result = SCHEMA_GetTableForId(db->schema, tableId, &table);
+    if(result != kStatus_Success) return result;
+
+    GUI_DisplayTableSchema(db, tableId);
+    
+    table_col_def_t *column = NULL;
+    while(1) {
+        printf("Enter the column you wish to search by: \n> ");
+        char columnName[MAX_COLUMN_NAME_SIZE];
+        INPUT_GetString(columnName, MAX_COLUMN_NAME_SIZE);
+        result = SCHEMA_GetColumnForName(table, columnName, &column);
+        if(result != kStatus_Success) {
+            printf("This column does not exist, try again...\n");
+        } else {
+            break;
+        }
+    }
+
+    printf("Enter the value you wish to search for: \n> ");
+    switch(column->type) {
+        // case INT:
+        //     int value;
+        //     INPUT_GetInteger(&value);
+        //     break;
+        // case STRING:
+        //     char value[MAX_COLUMN_NAME_SIZE];
+        //     INPUT_GetString(value, MAX_COLUMN_NAME_SIZE);
+        //     break;
+        default:
+            return kStatus_Fail;
+    }
+    
+    // Get value to search for
+
+    // Search for rows
+    // Display found rows
+    // Wait for key press
+
+    return kStatus_Success;
 }
 
 /* Schema Operations */

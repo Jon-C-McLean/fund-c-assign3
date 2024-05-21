@@ -141,6 +141,8 @@ status_t GUI_UpdateRecordForTable(database_t *db);
 
 status_t GUI_RemoveRowForTable(database_t *db);
 
+status_t GUI_FindRowsForTable(database_t *db);
+
 /* Schema Operations */
 
 /**
