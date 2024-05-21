@@ -1,8 +1,8 @@
 CC=gcc
-CFLAGS=-Wall -ansi -g
+CFLAGS=-Wall -ansi -g -Werror
 OUT_NAME := app
 BUILD_BIN := bin
-FILES := utils/misc.c comp/rle.c utils/rand.c enc/aes.c utils/screen.c utils/input.c ds/bp.c ds/db.c ds/schema.c interface/interface.c main.c
+FILES := utils/misc.c comp/rle.c utils/rand.c enc/aes.c utils/screen.c utils/input.c ds/db.c ds/schema.c interface/interface.c main.c
 
 DEBUG_FLAGS := -DDEBUG
 
