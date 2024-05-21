@@ -102,10 +102,8 @@ status_t SCHEMA_DestroyTableStructure(database_schema_t *schema, int index) {
         return kStatus_InvalidArgument;
     }
 
-    if(schema->tables + (sizeof(table_schema_def_t) * index) != NULL) {
-        if (schema->tables[index].columns != NULL) {
-            free(schema->tables[index].columns);
-        }
+    if(schema->tables[index].columns != NULL) {
+        free(schema->tables[index].columns);
 
         if(schema->numTables == 1) {
             DEBUG_PRINT(("Freeing table schema array\n"));

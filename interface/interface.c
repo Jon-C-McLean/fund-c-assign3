@@ -95,6 +95,11 @@ status_t GUI_SaveDatabase(database_t *db) {
         return kStatus_Fail;
     }
 
+    if(db->schema->numTables == 0) {
+        SCREEN_PrintError("No tables in database, cannot save\n");
+        return kStatus_Fail;
+    }
+
     SCREEN_PrintInput("Enter the name of the file you want to save the DB to: \n> ");
     INPUT_GetString(fileName, 256);
 
@@ -778,6 +783,12 @@ status_t GUI_CreateTable(database_t *db) {
         while(1) {
             printf("Enter the type of column %d (1: INT, 2: STRING): \n> ", i);
             INPUT_GetInteger(&columnType);
+
+            if(i == 0 && columnType != 1) {
+                SCREEN_PrintError("The first column must be an integer primary key\n");
+                continue;
+            }
+
             if(columnType == 1 || columnType == 2) break;
             SCREEN_PrintError("Invalid selection, please try again.\n");
         }
@@ -789,7 +800,9 @@ status_t GUI_CreateTable(database_t *db) {
                 INPUT_GetInteger(&columnSize);
 
                 if(columnSize <= 0 || columnSize > MAX_COLUMN_DATA_SIZE) {
-                    printf("Invalid column size, must be between 1 and %d\n", MAX_COLUMN_DATA_SIZE);
+                    char error[256];
+                    sprintf(error, "Invalid column size, must be between 1 and %d\n", MAX_COLUMN_DATA_SIZE);
+                    SCREEN_PrintError(error);
                 }else {
                     break;
                 }
@@ -1011,6 +1024,12 @@ void GUI_Main() {
 
         switch(selection) {
             case 1:
+                if(db != NULL) {
+                    SCREEN_PrintError("A database is already loaded, please " 
+                        "save and exit before loading a new one\n");
+                    GUI_PrintMainMenu();
+                    break;
+                }
                 db = GUI_LoadDatabase();
                 
                 if(db != NULL) {
@@ -1023,7 +1042,7 @@ void GUI_Main() {
             case 2: /* Create default E-DB */
                 if(db != NULL) {
                     SCREEN_PrintError("A database is already loaded, please " 
-                        "save and close it before creating a new one\n");
+                        "save and exit before creating a new one\n");
                     GUI_PrintMainMenu();
                     break;
                 }
