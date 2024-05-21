@@ -46,8 +46,6 @@ status_t DB_CreateDefaultDatabase(database_t **db) {
             case STRING:
                 rowSize += table->columns[i].size;
                 break;
-            case KEY:
-                exit(-3); /* XXX: Not implemented */
             default:
                 return kStatus_Schema_UnknownColumn; /* XXX: Is this the right error? */
         }
@@ -58,10 +56,10 @@ status_t DB_CreateDefaultDatabase(database_t **db) {
 }
 
 status_t DB_DestroyDatabase(database_t *db) {
-    if(db == NULL) return kStatus_InvalidArgument;
-    DEBUG_PRINT("Destroying database: %s\n", db->schema->dbName);
-
     int i = 0;
+    if(db == NULL) return kStatus_InvalidArgument;
+    DEBUG_PRINT(("Destroying database: %s\n", db->schema->dbName));
+
     for(i = 0; i < db->schema->numTables; i++) {
         if(db->tables[i].data != NULL) free(db->tables[i].data);
     }
@@ -77,32 +75,34 @@ status_t DB_CreateTable(database_t *db, char *name, table_col_def_t *columns, in
     status_t result;
     int rowSize = 0;
     int i = 0;
+    table_schema_def_t *table;
+    table_t *tableRealloc;
 
     if(db == NULL || name == NULL || columns == NULL) return kStatus_InvalidArgument;
 
-    DEBUG_PRINT("Creating table schema: %s\n", name);
+    DEBUG_PRINT(("Creating table schema: %s\n", name));
     result = SCHEMA_DefineTableStructure(db->schema, name, columns, numColumns);
 
     if(result != kStatus_Success) return result;/* Break out if schema failed */
 
-    DEBUG_PRINT("Table schema created\n");
-    DEBUG_PRINT("Allocating memory for new table\n");
+    DEBUG_PRINT(("Table schema created\n"));
+    DEBUG_PRINT(("Allocating memory for new table\n"));
     if(db->tables == NULL) {
-        DEBUG_PRINT("No existing tables, allocating memory\n");
+        DEBUG_PRINT(("No existing tables, allocating memory\n"));
         db->tables = (table_t *)malloc(sizeof(table_t));
         
         if(db->tables == NULL) { 
             /* Attempt to roll back schema creation */
-            DEBUG_PRINT("Failed to allocate memory\n");
+            DEBUG_PRINT(("Failed to allocate memory\n"));
             (void)SCHEMA_DestroyTableStructure(db->schema, db->schema->numTables - 1);
             return kStatus_AllocError; 
         }
     } else {
-        DEBUG_PRINT("Reallocating memory for to allow for new table\n");
-        table_t *tableRealloc = (table_t *)realloc(db->tables, sizeof(table_t) * (db->schema->numTables));
+        DEBUG_PRINT(("Reallocating memory for to allow for new table\n"));
+        tableRealloc = (table_t *)realloc(db->tables, sizeof(table_t) * (db->schema->numTables));
         if(db->tables == NULL) { 
             /* Attempt to roll back schema creation */
-            DEBUG_PRINT("Failed to reallocate memory\n");
+            DEBUG_PRINT(("Failed to reallocate memory\n"));
             (void)SCHEMA_DestroyTableStructure(db->schema, db->schema->numTables - 1);
             return kStatus_AllocError;
         }
@@ -111,7 +111,7 @@ status_t DB_CreateTable(database_t *db, char *name, table_col_def_t *columns, in
     }
     
 
-    table_schema_def_t *table = &(db->schema->tables[db->schema->numTables-1]);
+    table = &(db->schema->tables[db->schema->numTables-1]);
     for(i = 0; i < table->numColumns; i++) {
         switch(table->columns[i].type) {
             case INT:
@@ -120,14 +120,12 @@ status_t DB_CreateTable(database_t *db, char *name, table_col_def_t *columns, in
             case STRING:
                 rowSize += table->columns[i].size;
                 break;
-            case KEY:
-                exit(-3); /* XXX: Not implemented */
             default:
                 return kStatus_Schema_UnknownColumn; /* XXX: Is this the right error? */
         }
     }
 
-    DEBUG_PRINT("New Table Row Size: %d\n", rowSize);
+    DEBUG_PRINT(("New Table Row Size: %d\n", rowSize));
 
     db->tables[db->schema->numTables-1].data = NULL;
     db->tables[db->schema->numTables-1].rows = 0;
@@ -138,24 +136,25 @@ status_t DB_CreateTable(database_t *db, char *name, table_col_def_t *columns, in
 }
 
 status_t DB_InsertRow(database_t *db, int tableId, void *values) {
+    int offset;
     if(db == NULL || values == NULL) return kStatus_InvalidArgument;
     if(tableId > db->schema->numTables) return kStatus_Schema_UnknownTableId;
 
-    DEBUG_PRINT("Inserting row into table: %d\n", tableId);
+    DEBUG_PRINT(("Inserting row into table: %d\n", tableId));
 
     if(db->tables[tableId].data == NULL) {
-        DEBUG_PRINT("Allocating data region for table (no existing data region)\n");
+        DEBUG_PRINT(("Allocating data region for table (no existing data region)\n"));
         db->tables[tableId].data = (char *)malloc(db->tables[tableId].rowSize);
         if(db->tables[tableId].data == NULL) return kStatus_AllocError;
     } else {
-        DEBUG_PRINT("Reallocating data region for new record\n");
+        DEBUG_PRINT(("Reallocating data region for new record\n"));
         db->tables[tableId].data = (char *)realloc(db->tables[tableId].data, 
             (db->tables[tableId].rows+1) * db->tables[tableId].rowSize);
         if(db->tables[tableId].data == NULL) return kStatus_AllocError;
     }
 
     if(db->tables[tableId].data == NULL) return kStatus_AllocError;
-    int offset = db->tables[tableId].rows * db->tables[tableId].rowSize;
+    offset = db->tables[tableId].rows * db->tables[tableId].rowSize;
     memcpy(db->tables[tableId].data + offset, (char *)values, db->tables[tableId].rowSize);
 
     db->tables[tableId].rows++;
@@ -163,18 +162,15 @@ status_t DB_InsertRow(database_t *db, int tableId, void *values) {
 }
 
 status_t DB_FindRowWithKey(database_t *db, int tableId, int key, int *index) {
-    if(db == NULL || index == NULL) return kStatus_InvalidArgument;
-
-    DEBUG_PRINT("Finding row with key: %d in table: %d\n", key, tableId);
-
     status_t result;
     table_schema_def_t *table = NULL;
-    int i = 0;
+    int i = 0, keyOffset = 0;
+    if(db == NULL || index == NULL) return kStatus_InvalidArgument;
+
+    DEBUG_PRINT(("Finding row with key: %d in table: %d\n", key, tableId));
     if((result = SCHEMA_GetTableForId(db->schema, tableId, &table)) != kStatus_Success) {
         return result;
     }
-
-    int keyOffset = 0; /* The primary key's data offset in memory */
 
     for(i = 0; i < table->numColumns; i++) {
         if(table->columns[i].isPrimaryKey) {
@@ -186,33 +182,34 @@ status_t DB_FindRowWithKey(database_t *db, int tableId, int key, int *index) {
 
     for(i = 0; i < db->tables[tableId].rows; i++) {
         if(*(int *)(db->tables[tableId].data + (i * db->tables[tableId].rowSize) + keyOffset) == key) {
-            DEBUG_PRINT("Found row with key at index %d\n", i);
+            DEBUG_PRINT(("Found row with key at index %d\n", i));
             *index = i;
             return kStatus_Success;
         }
     }
 
-    DEBUG_PRINT("Failed to find row with key: %d in table: %d\n", key, tableId);
+    DEBUG_PRINT(("Failed to find row with key: %d in table: %d\n", key, tableId));
 
     *index = -1;
     return kStatus_Fail;
 }
 
 status_t DB_DeleteRow(database_t *db, int tableId, int rowId) {
+    int i = 0;
+    int dataIndex = 0;
+    char *newData;
     if(db == NULL) return kStatus_InvalidArgument;
     if(tableId < 0 || rowId < 0) return kStatus_InvalidArgument;
 
     if(tableId > db->schema->numTables) return kStatus_Schema_UnknownTableId;
     if(rowId > db->tables[tableId].rows) return kStatus_Fail;
 
-    DEBUG_PRINT("Deleting row %d from table %d\n", rowId, tableId);
+    DEBUG_PRINT(("Deleting row %d from table %d\n", rowId, tableId));
 
-    char *newData = (char *)malloc(db->tables[tableId].rowSize * (db->tables[tableId].rows - 1));
+    newData = (char *)malloc(db->tables[tableId].rowSize * (db->tables[tableId].rows - 1));
     if(newData == NULL) return kStatus_AllocError;
 
-    int i = 0;
-    int dataIndex = 0;
-    DEBUG_PRINT("Copying data to new memory region\n");
+    DEBUG_PRINT(("Copying data to new memory region\n"));
     for(i = 0; i < db->tables[tableId].rows; i++) {
         if(i == rowId) continue;
 
@@ -222,7 +219,7 @@ status_t DB_DeleteRow(database_t *db, int tableId, int rowId) {
         dataIndex++;
     }
 
-    DEBUG_PRINT("Freeing old data region\n");
+    DEBUG_PRINT(("Freeing old data region\n"));
     free(db->tables[tableId].data);
     db->tables[tableId].data = newData;
     db->tables[tableId].rows--;
@@ -231,6 +228,8 @@ status_t DB_DeleteRow(database_t *db, int tableId, int rowId) {
 }
 
 status_t DB_BuildBinaryData(database_t *db, char **data, int *size) {
+    int offset, calcSize = 0, i = 0, j = 0;
+    char *binarized;
     if(db == NULL || data == NULL || size == NULL) return kStatus_InvalidArgument;
 
     /* 
@@ -240,7 +239,6 @@ status_t DB_BuildBinaryData(database_t *db, char **data, int *size) {
      * 4. Write binarized data
      * 5. Return
     */
-   int calcSize = 0, i = 0, j = 0;
 
     /* Calculate binary size */
     calcSize += sizeof(db->schema->numTables); /* Number of tables */
@@ -264,12 +262,12 @@ status_t DB_BuildBinaryData(database_t *db, char **data, int *size) {
         calcSize += sizeof(db->tables[i].rows);
     }
 
-    char *binarized = (char *)malloc(calcSize);
+    binarized = (char *)malloc(calcSize);
     if(binarized == NULL) return kStatus_AllocError;
 
     *data = binarized;
     *size = calcSize;
-    int offset = 0;
+    offset = 0;
     
     memcpy(binarized + offset, &db->schema->numTables, sizeof(db->schema->numTables));
     offset += sizeof(db->schema->numTables);
@@ -310,19 +308,23 @@ status_t DB_BuildBinaryData(database_t *db, char **data, int *size) {
 }
 
 status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key, int keySize) {
+    int actualSize, binarySize, originalSize, compressedSize, paddingBytes;
+    aes_context_t context;
+    unsigned char iv[16] = {0};
+    char *binaryData, *compressedData;
+    FILE *file;
+    status_t result;
     if(db == NULL || filename == NULL) return kStatus_InvalidArgument;
 
-    DEBUG_PRINT("Opening file for writing: %s\n", filename);
-    FILE *file = fopen(filename, "wb");
+    DEBUG_PRINT(("Opening file for writing: %s\n", filename));
+    file = fopen(filename, "wb");
     if(file == NULL) return kStatus_Fail;
 
-    DEBUG_PRINT("Writing magic number to file\n");
+    DEBUG_PRINT(("Writing magic number to file\n"));
     (void)fwrite(MAGIC, sizeof(MAGIC), 1, file);
 
-    char *binaryData;
-    int binarySize;
-    status_t result = DB_BuildBinaryData(db, &binaryData, &binarySize);
-    int originalSize = binarySize;
+    result = DB_BuildBinaryData(db, &binaryData, &binarySize);
+    originalSize = binarySize;
 
     if(result != kStatus_Success) {
         (void)fclose(file);
@@ -332,21 +334,19 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
 
     /* Compress and realloc */
     if(compress) {
-        DEBUG_PRINT("Compressing data using RLE");
-        char *compressedData;
-        int compressedSize;
+        DEBUG_PRINT(("Compressing data using RLE"));
         RLE_Compress(binaryData, binarySize, &compressedData, &compressedSize);
 
         free(binaryData);
         binaryData = compressedData;
         binarySize = compressedSize;
 
-        DEBUG_PRINT("Data compressed to %d bytes,"
-             "writing compression magic to file\n", binarySize);
+        DEBUG_PRINT(("Data compressed to %d bytes,"
+             "writing compression magic to file\n", binarySize));
 
         (void)fwrite(COMP_MAGIC, sizeof(COMP_MAGIC), 1, file);
     } else {
-        DEBUG_PRINT("Writing normal data to file\n");
+        DEBUG_PRINT(("Writing normal data to file\n"));
         (void)fwrite(NORM_MAGIC, sizeof(NORM_MAGIC), 1, file);
     }
 
@@ -356,31 +356,29 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
     (void)memcpy(binaryData + binarySize - sizeof(ENC_CHECK_MAGIC), ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC));
 
     /* Pad data to be multiple of 16 bytes */
-    int paddingBytes = 0;
+    paddingBytes = 0;
     if(binarySize % 16 != 0) {
         paddingBytes = 16 - (binarySize % 16);
-        DEBUG_PRINT("Padding data with %d bytes\n", paddingBytes);
+        DEBUG_PRINT(("Padding data with %d bytes\n", paddingBytes));
         binarySize += paddingBytes;
         binaryData = (char *)realloc(binaryData, binarySize);
     }
 
-    aes_context_t context;
-    unsigned char iv[16] = {0};
     if(key != NULL) {
-        DEBUG_PRINT("Encrypting data using AES\n");
-        DEBUG_PRINT("Generating random IV\n");
+        DEBUG_PRINT(("Encrypting data using AES\n"));
+        DEBUG_PRINT(("Generating random IV\n"));
         RAND_GenerateInitVector(iv, 16);
 
-        DEBUG_PRINT("Initializing AES context with user key\n");
+        DEBUG_PRINT(("Initializing AES context with user key\n"));
         AES_InitContext(&context, (unsigned char *)key, iv);
 
-        DEBUG_PRINT("Encrypting data\n");
+        DEBUG_PRINT(("Encrypting data\n"));
         AES_Encrypt(&context, (unsigned char *)binaryData, binarySize);
     }
 
-    DEBUG_PRINT("Writing data to file\n");
+    DEBUG_PRINT(("Writing data to file\n"));
     /* Do compression and encryption here */
-    int actualSize = binarySize - paddingBytes;
+    actualSize = binarySize - paddingBytes;
     fwrite(&paddingBytes, sizeof(paddingBytes), 1, file); /* Save padding bytes */
     fwrite(&actualSize, sizeof(binarySize), 1, file); /* Save actual size */
     fwrite(&originalSize, sizeof(originalSize), 1, file); /* Save original data size */
@@ -390,80 +388,90 @@ status_t DB_SaveDatabase(database_t *db, char *filename, int compress, char *key
 
     free(binaryData);
 
-    DEBUG_PRINT("Finished exporting database\n");
+    DEBUG_PRINT(("Finished exporting database\n"));
 
     return kStatus_Success;
 }
 
 status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize) {
+    FILE *file;
+    unsigned char magic[7];
+    unsigned char iv[16];
+    char compStatus[sizeof(COMP_MAGIC)];
+    int isCompressed = 0, padding, binarySize, originalSize;
+    char *binaryData;
+    void *realloced;
+    char *decompressedData;
+    int decompressedSize;
+    int offset = 0;
+    int numTables;
+    char dbName[MAX_DB_NAME_SIZE];
+    int i, j;
+    aes_context_t context;
+
     if(db == NULL || filename == NULL) return kStatus_InvalidArgument;
 
-    FILE *file = fopen(filename, "rb");
+    file = fopen(filename, "rb");
     if(file == NULL) return kStatus_Fail;
 
-    unsigned char magic[7];
     (void)fread(magic, sizeof(magic), 1, file);
 
     if(memcmp(magic, MAGIC, sizeof(MAGIC)) != 0) {
-        DEBUG_PRINT("Missing/bad magic number\n");
+        DEBUG_PRINT(("Missing/bad magic number\n"));
         /* Likely corrupted or not a valid DB */
         (void)fclose(file);
         return kStatus_IO_BadMagicNumber;
     }
 
-    char compStatus[sizeof(COMP_MAGIC)];
     (void)fread(compStatus, sizeof(compStatus), 1, file);
 
-    int isCompressed = 0;
+    isCompressed = 0;
     if(memcmp(compStatus, COMP_MAGIC, sizeof(COMP_MAGIC)) == 0) {
-        DEBUG_PRINT("Data is compressed\n");
+        DEBUG_PRINT(("Data is compressed\n"));
         isCompressed = 1;
     }
 
-    int padding, binarySize, originalSize;
     (void)fread(&padding, sizeof(padding), 1, file);
     (void)fread(&binarySize, sizeof(binarySize), 1, file);
     (void)fread(&originalSize, sizeof(originalSize), 1, file);
 
-    unsigned char iv[16];
     (void)fread(iv, sizeof(iv), 1, file);
 
-    char *binaryData = (char *)malloc(binarySize);
+    binaryData = (char *)malloc(binarySize);
     (void)fread(binaryData, binarySize, 1, file);
 
     if(memcmp(binaryData + binarySize - sizeof(ENC_CHECK_MAGIC), ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC)) != 0) {
-        DEBUG_PRINT("Data is encrypted\n");
+        DEBUG_PRINT(("Data is encrypted\n"));
         if(key == NULL) {
-            DEBUG_PRINT("User encryption key is not provided\n");
+            DEBUG_PRINT(("User encryption key is not provided\n"));
             (void)fclose(file);
             free(binaryData);
             return kStatus_IO_MissingKey;
         }
 
         if(padding != 0) { /* TODO: Fixed unused result*/
-            void *relloaced = realloc(binaryData, binarySize + padding);
-            if(relloaced == NULL) {
-                DEBUG_PRINT("Failed to reallocate memory for padding\n");
+            realloced = realloc(binaryData, binarySize + padding);
+            if(realloced == NULL) {
+                DEBUG_PRINT(("Failed to reallocate memory for padding\n"));
                 (void)fclose(file);
                 free(binaryData);
                 return kStatus_AllocError;
             }
-            binaryData = relloaced;
+            binaryData = realloced;
 
             /* Read in padding bytes */
             (void)fread(binaryData + binarySize, padding, 1, file);
             binarySize += padding;
         }
 
-        aes_context_t context;
-        DEBUG_PRINT("Initializing AES context with user key\n");
+        DEBUG_PRINT(("Initializing AES context with user key\n"));
         AES_InitContext(&context, (unsigned char *)key, iv);
 
-        DEBUG_PRINT("Decrypting data\n");
+        DEBUG_PRINT(("Decrypting data\n"));
         AES_Decrypt(&context, (unsigned char *)binaryData, binarySize);
         
         if(memcmp(binaryData + (binarySize - sizeof(ENC_CHECK_MAGIC) - padding), ENC_CHECK_MAGIC, sizeof(ENC_CHECK_MAGIC)) != 0) {
-            DEBUG_PRINT("Failed to decrypt data, user key is likely invalid\n");
+            DEBUG_PRINT(("Failed to decrypt data, user key is likely invalid\n"));
             (void)fclose(file);
             free(binaryData);
             return kStatus_IO_BadKey;
@@ -471,21 +479,14 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
     }
 
     if(isCompressed) {
-        DEBUG_PRINT("Data is compressed, decompressing\n");
-        char *decompressedData;
-        int decompressedSize;
+        DEBUG_PRINT(("Data is compressed, decompressing\n"));
         RLE_Decompress(binaryData, binarySize, &decompressedData, &decompressedSize);
 
         free(binaryData);
         binaryData = decompressedData;
         binarySize = decompressedSize;
-        DEBUG_PRINT("Data decompressed to %d bytes\n", binarySize);
+        DEBUG_PRINT(("Data decompressed to %d bytes\n", binarySize));
     }
-
-    int offset = 0;
-    int numTables;
-    char dbName[MAX_DB_NAME_SIZE];
-    int i, j;
 
     *db = (database_t *)malloc(sizeof(database_t));
 
@@ -505,7 +506,7 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
         table_schema_def_t *table = &((*db)->schema->tables[i]);
         table_t *tableData = &((*db)->tables[i]);
         if(table == NULL) {
-            DEBUG_PRINT("Failed to allocate memory for table schema\n");
+            DEBUG_PRINT(("Failed to allocate memory for table schema\n"));
             (void)fclose(file);
             free(binaryData);
             (void)SCHEMA_DestroyDatabaseSchema((*db)->schema);
@@ -530,7 +531,7 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
 
         table->columns = (table_col_def_t *)malloc(sizeof(table_col_def_t) * table->numColumns);
         if(table->columns == NULL) {
-            DEBUG_PRINT("Failed to allocate memory for table columns\n");
+            DEBUG_PRINT(("Failed to allocate memory for table columns\n"));
             (void)fclose(file);
             free(binaryData);
             (void)SCHEMA_DestroyDatabaseSchema((*db)->schema);
@@ -546,7 +547,7 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
         tableData->tableId = table->tableId;
         tableData->data = (char *)malloc(tableData->rows * tableData->rowSize);
         if(tableData->data == NULL) {
-            DEBUG_PRINT("Failed to allocate memory for table data\n");
+            DEBUG_PRINT(("Failed to allocate memory for table data\n"));
             (void)fclose(file);
             free(binaryData);
             (void)SCHEMA_DestroyDatabaseSchema((*db)->schema);
@@ -560,7 +561,7 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
         }
     }
 
-    DEBUG_PRINT("Finished loading database\n");
+    DEBUG_PRINT(("Finished loading database\n"));
     (void)free(binaryData);
     (void)fclose(file);
 
@@ -568,29 +569,32 @@ status_t DB_LoadFromDisk(database_t **db, char *filename, char *key, int keySize
 }
 
 status_t DB_DropTable(database_t *db, int tableId) {
+    int i = 0;
+    int dataIndex = 0;
+    table_t *newTables;
+
+
     if(db == NULL) return kStatus_InvalidArgument;
     if(tableId > db->schema->numTables) return kStatus_Schema_UnknownTableId;
-    DEBUG_PRINT("Dropping table: %d\n", tableId);
+    DEBUG_PRINT(("Dropping table: %d\n", tableId));
 
     SCHEMA_DestroyTableStructure(db->schema, tableId);
 
     if(db->tables[tableId].data != NULL) free(db->tables[tableId].data);
     
     if(db->schema->numTables == 0) {
-        DEBUG_PRINT("No tables left in schema, freeing memory\n");
+        DEBUG_PRINT(("No tables left in schema, freeing memory\n"));
         free(db->tables);
         db->tables = NULL;
     } else {
-        DEBUG_PRINT("Reallocating memory for tables\n");
-        table_t *newTables = (table_t *)malloc(sizeof(table_t) * (db->schema->numTables));
+        DEBUG_PRINT(("Reallocating memory for tables\n"));
+        newTables = (table_t *)malloc(sizeof(table_t) * (db->schema->numTables));
         if(newTables == NULL) {
-            DEBUG_PRINT("Failed to allocate new memory for remaining tables\n");
+            DEBUG_PRINT(("Failed to allocate new memory for remaining tables\n"));
             return kStatus_AllocError; 
         }
 
-        DEBUG_PRINT("Copying tables to new memory region\n");
-        int i = 0;
-        int dataIndex = 0;
+        DEBUG_PRINT(("Copying tables to new memory region\n"));
         for(i = 0; i < db->schema->numTables+1; i++) {
             if(i == tableId) continue;
 
@@ -599,7 +603,7 @@ status_t DB_DropTable(database_t *db, int tableId) {
             dataIndex++;
         }
 
-        DEBUG_PRINT("Freeing old memory region\n");
+        DEBUG_PRINT(("Freeing old memory region\n"));
         free(db->tables);
         db->tables = newTables;
     }
@@ -608,23 +612,26 @@ status_t DB_DropTable(database_t *db, int tableId) {
 }
 
 status_t DB_FindRowsWithColumnValue(database_t *db, int tableId, int columnId, void *value, int **indexes, int *numIndexes) {
+    table_t *tableData;
+    int *foundIndexes;
+    int found, offset, i = 0;
+    table_schema_def_t *table;
+
     if(db == NULL || value == NULL || indexes == NULL || numIndexes == NULL) return kStatus_InvalidArgument;
     if(tableId > db->schema->numTables) return kStatus_Schema_UnknownTableId;
 
-    DEBUG_PRINT("Finding rows in table %d with column %d matching value\n", tableId, columnId);
-    table_schema_def_t *table = &(db->schema->tables[tableId]);
+    DEBUG_PRINT(("Finding rows in table %d with column %d matching value\n", tableId, columnId));
+    table = &(db->schema->tables[tableId]);
     if(columnId > table->numColumns) return kStatus_Schema_UnknownColumn;
 
-    int i = 0;
-
     /* Allocate worst case result size */
-    int *foundIndexes = (int *)malloc(sizeof(int) * db->tables[tableId].rows);
+    foundIndexes = (int *)malloc(sizeof(int) * db->tables[tableId].rows);
     if(foundIndexes == NULL) {
-        DEBUG_PRINT("Failed to allocate memory for indexes\n");
+        DEBUG_PRINT(("Failed to allocate memory for indexes\n"));
         return kStatus_AllocError;
     }
 
-    int offset = 0;
+    offset = 0;
     for(i = 0; i < columnId; i++) {
         switch(table->columns[i].type) {
             case INT:
@@ -633,15 +640,13 @@ status_t DB_FindRowsWithColumnValue(database_t *db, int tableId, int columnId, v
             case STRING:
                 offset += table->columns[i].size;
                 break;
-            case KEY:
-                exit(-3); /* XXX: Not implemented */
             default:
                 return kStatus_Schema_UnknownColumn; /* XXX: Is this the right error? */
         }
     }
 
-    table_t *tableData = &db->tables[tableId];
-    int found = 0;
+    tableData = &db->tables[tableId];
+    found = 0;
     for(i = 0; i < tableData->rows; i++) {
         switch(table->columns[columnId].type) {
             case INT:
@@ -656,8 +661,6 @@ status_t DB_FindRowsWithColumnValue(database_t *db, int tableId, int columnId, v
                     found++;
                 }
                 break;
-            case KEY:
-                exit(-3); /* XXX: Not implemented */
             default:
                 return kStatus_Schema_UnknownColumn; /* XXX: Is this the right error? */
         }

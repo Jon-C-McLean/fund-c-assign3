@@ -17,6 +17,7 @@ void INPUT_GetInteger(int* value) {
 }
 
 int INPUT_GetString(char* str, int size) { /* Taken from A2 (Jon McLean) */
+    int length = 0;
     /* 
     If maximum size is less than two then immediately return 
     as we need at least 2 bytes to store the newline and null terminator 
@@ -36,7 +37,7 @@ int INPUT_GetString(char* str, int size) { /* Taken from A2 (Jon McLean) */
     } while (strlen((const char*)str) < 2);
 
     /* Get length of non-empty string */
-    int length = strlen((const char*)str);
+    length = strlen((const char*)str);
     
     /*
     If the last value in the array is not a new line character we need

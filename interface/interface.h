@@ -200,20 +200,6 @@ status_t GUI_DeleteTable(database_t *db);
 status_t GUI_AddColumn(database_t *db);
 
 /**
- * @brief Prompts the user to delete a column from a table in the database.
- * The function will then prompt the user to enter the name of the table they
- * wish to delete a column from. The user will then be prompted to enter the
- * name of the column they wish to delete.
- * @author Jon McLean (13515869)
- * 
- * @warning The operations performed by this function are irreversible.
- * 
- * @param[inout] db The database to delete the column from.
- * @return status_t Status of the operation
- */
-status_t GUI_DeleteColumn(database_t *db);
-
-/**
  * @brief Displays the schema of a table to the console. The function will
  * prompt the user to enter the name of the table they wish to view.
  * @author Jon McLean (13515869)

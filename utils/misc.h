@@ -6,11 +6,12 @@
 #ifndef MISC_H
 #define MISC_H
 
+#define DEBUG 1
 #if defined(DEBUG) && DEBUG == 1
     #include <stdio.h>
-    #define DEBUG_PRINT(...) printf(__VA_ARGS__)
+    #define DEBUG_PRINT(args) (printf("DEBUG: %s:%d ", __FILE__, __LINE__), printf args)
 #else
-    #define DEBUG_PRINT(...)
+    #define DEBUG_PRINT(args) __asm__("nop")
 #endif
 
 /**

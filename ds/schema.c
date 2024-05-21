@@ -28,11 +28,12 @@ status_t SCHEMA_CreateDatabaseSchema(database_schema_t **schema, char *dbName) {
 
 status_t SCHEMA_CreateDefaultDatabaseSchema(database_schema_t **schema) {
     char tableName[MAX_TABLE_NAME_SIZE] = "Employee";
-
+    table_col_def_t *employeeColumns;
+    
     status_t result = SCHEMA_CreateDatabaseSchema(schema, NULL);
     if(result != kStatus_Success) return result;
     
-    table_col_def_t *employeeColumns = malloc(sizeof(table_col_def_t) * 3);
+    employeeColumns = malloc(sizeof(table_col_def_t) * 3);
     memset(employeeColumns, 0, sizeof(table_col_def_t) * 3);
 
     strncpy(employeeColumns[0].columnName, "EmployeeID", MAX_COLUMN_NAME_SIZE);
@@ -58,7 +59,7 @@ status_t SCHEMA_DestroyDatabaseSchema(database_schema_t *schema) {
         return kStatus_InvalidArgument;
     }
 
-    DEBUG_PRINT("Destroying schema\n");
+    DEBUG_PRINT(("Destroying schema\n"));
     free(schema);
     return kStatus_Success;
 }
@@ -72,11 +73,11 @@ status_t SCHEMA_DefineTableStructure(database_schema_t *schema, char *name, tabl
         return kStatus_Schema_UnknownError;
     }
 
-    DEBUG_PRINT("Defining table structure\n");
-    DEBUG_PRINT("Reallocating table schema array to %d\n", schema->numTables + 1);
+    DEBUG_PRINT(("Defining table structure\n"));
+    DEBUG_PRINT(("Reallocating table schema array to %d\n", schema->numTables + 1));
     schema->tables = (table_schema_def_t *)realloc(schema->tables, sizeof(table_schema_def_t) * (schema->numTables + 1));
     if(schema->tables == NULL) {
-        DEBUG_PRINT("Failed to reallocate table schema array\n");
+        DEBUG_PRINT(("Failed to reallocate table schema array\n"));
         return kStatus_AllocError;
     }
 
@@ -86,7 +87,7 @@ status_t SCHEMA_DefineTableStructure(database_schema_t *schema, char *name, tabl
     schema->tables[schema->numTables].tableId = schema->numTables;
 
     schema->numTables++;
-    DEBUG_PRINT("New table count: %d\n", schema->numTables);
+    DEBUG_PRINT(("New table count: %d\n", schema->numTables));
 
     return kStatus_Success;
 }
@@ -107,18 +108,18 @@ status_t SCHEMA_DestroyTableStructure(database_schema_t *schema, int index) {
         }
 
         if(schema->numTables == 1) {
-            DEBUG_PRINT("Freeing table schema array\n");
+            DEBUG_PRINT(("Freeing table schema array\n"));
             free(schema->tables);
             schema->tables = NULL;
             schema->numTables = 0;
         } else {
-            DEBUG_PRINT("Shifting table schema array\n");
+            DEBUG_PRINT(("Shifting table schema array\n"));
             for(i = index; i < schema->numTables - 1; i++) {
                 schema->tables[i] = schema->tables[i + 1];
                 schema->tables[i].tableId = i;
             }
             schema->numTables--;
-            DEBUG_PRINT("Reallocating table schema array to %d\n", schema->numTables);
+            DEBUG_PRINT(("Reallocating table schema array to %d\n", schema->numTables));
             schema->tables = (table_schema_def_t *)realloc(schema->tables, sizeof(table_schema_def_t) * schema->numTables);
         }
     }
@@ -133,7 +134,7 @@ status_t SCHEMA_GetTableForId(database_schema_t *schema, int tableId, table_sche
 
     if(tableId < 0 || tableId >= schema->numTables) {
         return kStatus_Schema_UnknownTableId;
-        DEBUG_PRINT("Unknown table ID\n");
+        DEBUG_PRINT(("Unknown table ID\n"));
     }
 
     *table = &schema->tables[tableId];
@@ -154,7 +155,7 @@ status_t SCHEMA_GetTableIdForName(database_schema_t *schema, char *name, int *ta
         }
     }
 
-    DEBUG_PRINT("Table not found for name: %s\n", name);
+    DEBUG_PRINT(("Table not found for name: %s\n", name));
 
     *tableId = -1;
     return kStatus_Schema_UnknownTableId;
@@ -168,14 +169,14 @@ status_t SCHEMA_AddColumn(database_schema_t *schema, int tableId, char *name, co
     }
 
     if(tableId < 0 || tableId >= schema->numTables) {
-        DEBUG_PRINT("Unknown table ID\n");
+        DEBUG_PRINT(("Unknown table ID\n"));
         return kStatus_Schema_UnknownTableId;
     }
 
     table = &schema->tables[tableId];
     columns = (table_col_def_t *)realloc(table->columns, sizeof(table_col_def_t) * (table->numColumns + 1));
     if(columns == NULL) {
-        DEBUG_PRINT("Failed to reallocate columns array to include new column\n");
+        DEBUG_PRINT(("Failed to reallocate columns array to include new column\n"));
         return kStatus_AllocError;
     }
 
@@ -186,7 +187,7 @@ status_t SCHEMA_AddColumn(database_schema_t *schema, int tableId, char *name, co
 
     table->columns = columns;
     table->numColumns++;
-    DEBUG_PRINT("New column count: %d\n", table->numColumns);
+    DEBUG_PRINT(("New column count: %d\n", table->numColumns));
 
     return kStatus_Success;
 }
@@ -204,7 +205,7 @@ status_t SCHEMA_GetColumnForName(table_schema_def_t *table, char *name, table_co
         }
     }
 
-    DEBUG_PRINT("Column not found for name: %s\n", name);
+    DEBUG_PRINT(("Column not found for name: %s\n", name));
 
     return kStatus_Schema_UnknownColumn;
 }
@@ -222,7 +223,7 @@ status_t SCHEMA_GetIDForColumn(table_schema_def_t *table, char *name, int *colum
         }
     }
 
-    DEBUG_PRINT("Column not found for name: %s\n", name);
+    DEBUG_PRINT(("Column not found for name: %s\n", name));
 
     *columnId = -1;
     return kStatus_Schema_UnknownColumn;

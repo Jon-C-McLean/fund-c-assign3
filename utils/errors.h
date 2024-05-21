@@ -29,7 +29,7 @@ typedef enum {
     kStatus_IO_FileNotFound = MAKE_STATUS_CODE(IO_GROUP_ID, 1),
     kStatus_IO_BadMagicNumber = MAKE_STATUS_CODE(IO_GROUP_ID, 2),
     kStatus_IO_MissingKey = MAKE_STATUS_CODE(IO_GROUP_ID, 3),
-    kStatus_IO_BadKey = MAKE_STATUS_CODE(IO_GROUP_ID, 4),
+    kStatus_IO_BadKey = MAKE_STATUS_CODE(IO_GROUP_ID, 4)
 } status_t;
 
 #endif

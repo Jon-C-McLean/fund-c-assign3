@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -ansi -g -Werror
+CFLAGS=-Wall -ansi -g -Werror -Wpedantic
 OUT_NAME := app
 BUILD_BIN := bin
 FILES := utils/misc.c comp/rle.c utils/rand.c enc/aes.c utils/screen.c utils/input.c ds/db.c ds/schema.c interface/interface.c main.c

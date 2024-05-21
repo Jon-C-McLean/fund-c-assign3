@@ -22,8 +22,7 @@
 
 typedef enum {
     INT,
-    STRING,
-    KEY,
+    STRING
 } column_type_t;
 
 typedef struct __attribute__((__packed__)) {
