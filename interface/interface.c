@@ -14,7 +14,7 @@ void GUI_PrintWelcome() {
     SCREEN_Print("|_______|       |_______/ |______/  \n", kColor_Red);
     SCREEN_Print("\n", kColor_Red);
     SCREEN_Print("Welcome to E-DB, the customisable employee database system!\n", kColor_Red);
-    SCREEN_Print("Written by Jon McLean, Samuel Morgan, Andre Mury, and David Lua\n", kColor_Red);
+    SCREEN_Print("Written by Jon McLean (other members failed to contribute)\n", kColor_Red);
     SCREEN_Print("===============================================================\n", kColor_Red);
     SCREEN_Print("\n\n\n", kColor_Red);
 }
@@ -672,7 +672,7 @@ void GUI_SchemaOperationsLoop(database_t *db) {
     GUI_PrintSchemaOperationsMenu();
 
     while(1) {
-        int selection = GUI_GetOptionSelection(1, 7, "Please select an option (1-6): ");
+        int selection = GUI_GetOptionSelection(1, 5, "Please select an option (1-5): ");
         status_t status = kStatus_Success;
 
         switch(selection) {
@@ -722,7 +722,7 @@ void GUI_SchemaOperationsLoop(database_t *db) {
                 printf("================\n");
                 GUI_PrintSchemaOperationsMenu();
                 break;
-            case 5:
+            case 4:
                 status = GUI_DisplayTableSchema(db, -1);
                 if(status != kStatus_Success) {
                     if(status == kStatus_Schema_UnknownTableId) {
@@ -738,9 +738,10 @@ void GUI_SchemaOperationsLoop(database_t *db) {
                 printf("================\n");
                 GUI_PrintSchemaOperationsMenu();
             case -1:
-                printf("FATAL: Internal error occured\n");
+                SCREEN_PrintError("An internal error has occured, "
+                    "please try agian\n");
                 return;
-            case 6: 
+            case 5: 
                 /* Return to main menu*/
                 SCREEN_ClearScreen();
                 return;
@@ -752,9 +753,8 @@ void GUI_PrintSchemaOperationsMenu() {
     printf("1. Create Table\n");
     printf("2. Delete Table\n");
     printf("3. Add Column\n");
-    printf("4. Delete Column\n"); /* TODO */
-    printf("5. Display Table Schema\n");
-    printf("6. Return to Main Menu\n");
+    printf("4. Display Table Schema\n");
+    printf("5. Return to Main Menu\n");
 }
 
 status_t GUI_CreateTable(database_t *db) {
@@ -1080,7 +1080,8 @@ void GUI_Main() {
                 exit(0);
                 break;
             case -1:
-                printf("FATAL: Internal error occured\n");
+                SCREEN_PrintError("An internal error has occured, "
+                    "please try agian\n");
                 DB_DestroyDatabase(db);
                 exit(-1);
                 break;
