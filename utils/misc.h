@@ -6,7 +6,6 @@
 #ifndef MISC_H
 #define MISC_H
 
-#define DEBUG 1
 #if defined(DEBUG) && DEBUG == 1
     #include <stdio.h>
     #define DEBUG_PRINT(args) (printf("DEBUG: %s:%d ", __FILE__, __LINE__), printf args)
